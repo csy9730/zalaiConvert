@@ -58,7 +58,7 @@ def convert_rknn(target, cfg_in, weight_in, dataset_in, rknn_out):
     # Export rknn model
     print('--> Export RKNN model')
     
-    rknn_temp_path = os.path.abspath(os.path.dirname(__file__)) + "\\tmp.t"
+    rknn_temp_path = os.path.abspath(os.path.dirname(rknn_out)) + "/tmp.t"
     ret = rknn.export_rknn(rknn_temp_path)
     if ret != 0:
         print('Export failed!')

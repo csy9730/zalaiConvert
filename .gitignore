@@ -10,3 +10,4 @@ bak/
 *.egg-info/
 
 tmp_*
+data/
