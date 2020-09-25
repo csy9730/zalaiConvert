@@ -3,7 +3,9 @@ import os
 import sys
 import json
 import argparse
-import rknn_convert_utils as rknn_c
+import os.path as osp
+sys.path.append(osp.dirname(osp.abspath(__file__)))
+import zalaiConvert.rknn_convert_utils as rknn_c
 
 model_parser = argparse.ArgumentParser(description='rknn convert api.')
 
