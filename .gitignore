@@ -1,0 +1,12 @@
+*.pyc
+*.sh
+__pychche__/
+build/
+dist/
+temp/
+tmp/
+bak/
+.vscode/
+*.egg-info/
+
+tmp_*
