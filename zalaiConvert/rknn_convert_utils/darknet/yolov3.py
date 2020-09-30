@@ -5,15 +5,20 @@ import cv2
 import numpy as np
 from rknn.api import RKNN
 
+if(os.name == "nt"):
+    os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64") + ";" + os.environ.get('path') 
+    os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64") + ";" + os.environ.get('path') 
+
+
 def rknn_precompile_get(target_platform, rknn_in, rknn_out):
     
     print("---rknnInference---")
     mat = np.zeros((416,416,3), np.uint8)
 
-    # 创建 RKNN 对象
+    # ?? RKNN ??
     rknn = RKNN()
 
-    ret = rknn.load_rknn(rknn_in)
+    ret = rknn.load_rknn(rknn_in)         
     ret = rknn.init_runtime(target=target_platform, eval_mem=True, rknn2precompile=True)
     if ret!=0:
         print('Init runtime environment failed')
@@ -29,6 +34,11 @@ def rknn_precompile_get(target_platform, rknn_in, rknn_out):
     rknn.release()
 
 def convert_rknn(target, cfg_in, weight_in, dataset_in, rknn_out): 
+
+    # print(os.system("D:\\Yeelearn\\M1808\\rknn\\adb_tool\\adb.exe shell nohup start_usb.sh ntb"))
+    # print(os.system("D:\\Yeelearn\\M1808\\rknn\\adb_tool\\adb.exe shell cat /etc/hostname"))
+    # exit()
+
      # Create RKNN object
     rknn = RKNN()
     print(target, cfg_in, dataset_in, rknn_out)

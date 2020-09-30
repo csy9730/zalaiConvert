@@ -17,7 +17,14 @@
 
 `start_usb.sh  ntb`
 
+```
+which start_usb.sh
+/usr/bin/start_usb.sh
 
+adb shell nohup start_usb.sh ntb
+[root@M1808 ~]# vi /usr/bin/start_usb.sh
+[root@M1808 ~]# ls /dev/usb-ffs/
+```
 
 
 

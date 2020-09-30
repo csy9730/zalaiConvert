@@ -5,14 +5,7 @@ import json
 import argparse
 import os.path as osp
 sys.path.append(osp.dirname(osp.abspath(__file__)))
-import zalaiConvert.rknn_convert_utils as rknn_c
-
-model_parser = argparse.ArgumentParser(description='rknn convert api.')
-
-model_parser.add_argument('--config', dest='config', action='store', required=True,
-                    help='json file for rknn model conversion.')
-
-model_args = model_parser.parse_args()
+import rknn_convert_utils as rknn_c
 
 # 瑞星微平台
 rk_source_platform_sets = ["caffe", "darknet", "mxnet", "onnx", "pytorch", "tensorflow", "tensorflow_lite"]
@@ -22,7 +15,7 @@ rk_target_platform_sets = ["rk3399pro", "rk1808", "rv1109", "rv1126"]
 zlg_source_platform_sets = []
 zlg_target_platform_sets = []
 
-def model_convert():
+def model_convert(model_args):
     args_dic = vars(model_args)
     json_config = args_dic["config"]
     
@@ -49,6 +42,11 @@ def model_convert():
 
 if __name__ == "__main__":
     print("model_convert_api\n")
-    
-    model_convert()
+    model_parser = argparse.ArgumentParser(description='rknn convert api.')
+
+    model_parser.add_argument('--config', '-c', dest='config', action='store', required=True,
+                        help='json file for rknn model conversion.')
+
+    model_args = model_parser.parse_args()
+    model_convert(model_args)
     
