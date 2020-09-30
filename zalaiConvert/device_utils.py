@@ -4,14 +4,13 @@ import subprocess
 import time
 import argparse
 
-sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), ".."))
-# 环境变量添加adb, rknn_api.dll
+sys.path.append(osp.dirname(osp.abspath(__file__)))
 
 
-def checkConvertWrap(args):
+def checkRknnDevice(args):
     from rknn.api import RKNN
-    from zalaiConvert.model_convert_api import model_convert
-    adbs, ntbs = RKNN().list_devices()
+    from model_convert_api import model_convert
+    _, ntbs = RKNN().list_devices()
     if not ntbs:
         ret = subprocess.run("adb devices", stdout=subprocess.PIPE)
         print(ret.stdout)
@@ -19,25 +18,12 @@ def checkConvertWrap(args):
             print("adb devices error;")
             return 5
         if b"0123456789ABCDEF" in ret.stdout:
-            ret = subprocess.run("adb shell nohup start_usb.sh ntb")  
-            if ret.returncode != 0:
-                print("adb shell error")
-                return 4
-            time.sleep(5)
-            _, ntbs2 = RKNN().list_devices()
-            if not ntbs2:
-                print("no ntb devices;please install ntb driver")
-                return 2
-            else:
-                model_convert(args)
-                return 0
+            return 0
         else:
             print("please reset rknn device and connect rknn device")
-            # print("no ntb devices;please install ntb driver")
             return 1
-    else:
-        model_convert(args)
-        return 0
+    
+    return [], ntbs
 
 def parse_args():
     model_parser = argparse.ArgumentParser(description='rknn convert api.')
