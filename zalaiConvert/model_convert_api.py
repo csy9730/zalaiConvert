@@ -5,7 +5,6 @@ import json
 import argparse
 import os.path as osp
 sys.path.append(osp.dirname(osp.abspath(__file__)))
-import rknn_convert_utils as rknn_c
 
 # 瑞星微平台
 rk_source_platform_sets = ["caffe", "darknet", "mxnet", "onnx", "pytorch", "tensorflow", "tensorflow_lite"]
@@ -15,38 +14,21 @@ rk_target_platform_sets = ["rk3399pro", "rk1808", "rv1109", "rv1126"]
 zlg_source_platform_sets = []
 zlg_target_platform_sets = []
 
-def model_convert(model_args):
-    args_dic = vars(model_args)
-    json_config = args_dic["config"]
-    
-    if not json_config is None:
-            with open(json_config, 'r') as f:
-                params_json = json.loads(f.read())
-    
-    source_platform = params_json["source_platform"]
-    target_platform = params_json["target_platform"]
-    
-    if source_platform in rk_source_platform_sets and target_platform in rk_target_platform_sets:
-        print("model conversion begins.")
-        model_name        = params_json["model_name"]
-        model_file        = params_json["model_file"]
-        model_weight_file = params_json["model_weight_file"]
-        dataset_file      = params_json["dataset_file"]
-        model_out_path = params_json["model_out_path"]
-        
-        rknn_c.__dict__[source_platform].__dict__[model_name].convert_rknn(target_platform, model_file, model_weight_file, dataset_file, model_out_path)
+
+def model_convert(cfg):
+    import zalaiConvert.rknn_convert_utils as rknn_c
+    source_platform = cfg.source_platform
+    target_platform = cfg.target_platform
+    model_name = cfg.model_name
+    dct = {
+        "target": target_platform, 
+        "cfg_in": cfg.model_file,
+        "weight_in": cfg.model_weight_file, 
+        "dataset_in": cfg.dataset_in,
+        "rknn_out": cfg.model_out_path
+    }
+
+    if source_platform in rk_source_platform_sets and target_platform in rk_target_platform_sets:        
+        rknn_c.__dict__[source_platform].__dict__[model_name].convert_rknn(**dct)
     else:
         print("exit.")
-    
-    return
-
-if __name__ == "__main__":
-    print("model_convert_api\n")
-    model_parser = argparse.ArgumentParser(description='rknn convert api.')
-
-    model_parser.add_argument('--config', '-c', dest='config', action='store', required=True,
-                        help='json file for rknn model conversion.')
-
-    model_args = model_parser.parse_args()
-    model_convert(model_args)
-    

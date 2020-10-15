@@ -7,6 +7,7 @@ sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), '../..'))
 
 from zalaiConvert.convertWrap import main
 
+
 if __name__ == "__main__":
     output_dir = "tmp_demo"
     if not osp.exists(output_dir):
@@ -17,21 +18,23 @@ if __name__ == "__main__":
         "model_name": "yolov3",
         "model_file": osp.abspath("data\\yolov3_darknet\\yolov3_test.cfg"),
         "model_weight_file": osp.abspath("data\\yolov3_darknet\\yolov3_test.weights"),
-        "dataset_file":osp.abspath("data\\yolov3_darknet\\dataset.txt"),
-        "model_out_path": osp.abspath("tmp_demo\\yolov3_test2.rknn")
+        "dataset_in": 'E:\\nnCollect\\zalaiyolo\\data\\samples\\export_data\\data_list.txt',# osp.abspath("data\\yolov3_darknet\\dataset.txt"),
+        "model_out_path": osp.abspath("tmp_demo\\yolov3_test3.rknn")
     }
 
-    with open(dct["dataset_file"],'w') as fp:
+    with open(dct["dataset_in"],'w') as fp:
         fp.write(osp.abspath("data\\yolov3_darknet\\yolov3_test.jpg"))
         
     jfile = 'tmp_demo/tmp.rk.json'
     with open(jfile, 'w') as fp:
         json.dump(dct, fp)
 
-    sys.argv = ['foo', '--config', jfile]
-
-    import time
-    print(time.time())
-    print(time.asctime())
-    main()
-    print(time.asctime())
+    # sys.argv = ['foo', '--config', jfile]
+    # main()
+    cmd = ['-i', dct["model_weight_file"],
+     '-o', dct["model_out_path"],
+     '-nf', dct["model_file"],
+     '-tp', "rk1808", '-df', dct["dataset_in"]]
+     # , '--config', jfile
+    print(cmd)
+    main(cmd) 

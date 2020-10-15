@@ -10,13 +10,13 @@ if(os.name == "nt"):
     os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64") + ";" + os.environ.get('path') 
 
 
-def rknn_precompile_get(target_platform, rknn_in, rknn_out):
+def rknn_precompile_get(target_platform, rknn_in, rknn_out, log_file="rknn.log", **kwargs):
     
     print("---rknnInference---")
     mat = np.zeros((416,416,3), np.uint8)
 
     # ?? RKNN ??
-    rknn = RKNN()
+    rknn = RKNN(verbose=True, verbose_file=log_file)
 
     ret = rknn.load_rknn(rknn_in)         
     ret = rknn.init_runtime(target=target_platform, eval_mem=True, rknn2precompile=True)
@@ -33,14 +33,14 @@ def rknn_precompile_get(target_platform, rknn_in, rknn_out):
 
     rknn.release()
 
-def convert_rknn(target, cfg_in, weight_in, dataset_in, rknn_out): 
+def convert_rknn(target, cfg_in, weight_in, dataset_in, rknn_out, log_file="rknn.log", **kwargs): 
 
     # print(os.system("D:\\Yeelearn\\M1808\\rknn\\adb_tool\\adb.exe shell nohup start_usb.sh ntb"))
     # print(os.system("D:\\Yeelearn\\M1808\\rknn\\adb_tool\\adb.exe shell cat /etc/hostname"))
     # exit()
 
      # Create RKNN object
-    rknn = RKNN()
+    rknn = RKNN(verbose=True, verbose_file=log_file)
     print(target, cfg_in, dataset_in, rknn_out)
 
 
@@ -75,7 +75,7 @@ def convert_rknn(target, cfg_in, weight_in, dataset_in, rknn_out):
         exit(ret)
     print('done')
     
-    rknn_precompile_get(target, rknn_temp_path, rknn_out)
+    rknn_precompile_get(target, rknn_temp_path, rknn_out, log_file)
     
     os.remove(rknn_temp_path)
 

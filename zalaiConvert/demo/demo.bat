@@ -1,0 +1,1 @@
+python -m  zalaiConvert.convertWrap -c e:\nnCollect\zalaiConvert\tmp_demo\tmp.rk.json

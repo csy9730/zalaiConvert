@@ -3,54 +3,69 @@ import os.path as osp
 import subprocess
 import time
 import argparse
+import json
+
+from zalai.common.stdout_status import fStdoutDict, fStdoutStatusDecorator
+from zalai.common.constant import TrainProc
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), ".."))
 # 环境变量添加adb, rknn_api.dll
 
+from zalaiConvert.utils.cli import CliRuner, namespaceMergeDict
 
-def checkConvertWrap(args):
-    from rknn.api import RKNN
-    from zalaiConvert.model_convert_api import model_convert
-    adbs, ntbs = RKNN().list_devices()
-    if not ntbs:
-        ret = subprocess.run("adb devices", stdout=subprocess.PIPE)
-        print(ret.stdout)
-        if ret.returncode != 0: 
-            print("adb devices error;")
-            return 5
-        if b"0123456789ABCDEF" in ret.stdout:
-            ret = subprocess.run("adb shell nohup start_usb.sh ntb")  
-            if ret.returncode != 0:
-                print("adb shell error")
-                return 4
-            time.sleep(5)
-            _, ntbs2 = RKNN().list_devices()
-            if not ntbs2:
-                print("no ntb devices;please install ntb driver")
-                return 2
-            else:
-                model_convert(args)
-                return 0
-        else:
-            print("please reset rknn device and connect rknn device")
-            # print("no ntb devices;please install ntb driver")
-            return 1
-    else:
-        model_convert(args)
-        return 0
 
-def parse_args():
-    model_parser = argparse.ArgumentParser(description='rknn convert api.')
+class CliExporter(CliRuner):
+    @fStdoutStatusDecorator(TrainProc.ON_ARGPARSE_START, TrainProc.ON_ARGPARSE_END)
+    def parse_args(self, cmd=None):   
+        parser = argparse.ArgumentParser(description='rknn convert api.')
 
-    model_parser.add_argument('--config', dest='config', action='store', required=True,
-                        help='json file for rknn model conversion.')
+        parser.add_argument('--config', '-c', help='json file for rknn model conversion.')
+        parser.add_argument('--input', '-i')
+        parser.add_argument('--output', '-o')
+        parser.add_argument('--network-file', '-nf')
+        parser.add_argument('--dataset-in', '-df')
+        parser.add_argument('--target-platform', '-tp')
+        
+        args = parser.parse_args(cmd)
+        return args
 
-    model_args = model_parser.parse_args()
-    return model_args
+    def mergeCfg(self, cfg):
+        json_config = cfg.config
 
-def main():
-    args = parse_args()
-    checkConvertWrap(args)
+        args = {
+            "model_out_path": cfg.output, 
+            "model_weight_file": cfg.input,
+            "model_file": cfg.network_file
+        }
+
+        namespaceMergeDict(cfg, args) 
+        if json_config:
+            with open(json_config, 'r') as f:
+                params_json = json.load(f)
+                namespaceMergeDict(cfg, params_json)
+        namespaceMergeDict(cfg, self.defaultDict)
+        return cfg
+
+    @property
+    def defaultDict(self):
+        return {
+            "source_platform": "darknet",
+            "target_platform": "rk1808",
+            "model_name": "yolov3"
+        }
+
+    def handle(self, cfg):
+        from zalaiConvert.device_utils import checkToNtb
+        from zalaiConvert.model_convert_api import model_convert
+        # print(cfg)
+        # exit(0)
+        ret = checkToNtb()
+        if ret == 0:
+            model_convert(cfg)
+
+
+def main(cmd=None):
+    CliExporter().run(cmd)
 
 
 if __name__ == "__main__":
