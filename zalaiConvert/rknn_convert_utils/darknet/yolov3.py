@@ -16,7 +16,8 @@ def rknn_precompile_get(target_platform, rknn_in, rknn_out, log_file="rknn.log",
     mat = np.zeros((416,416,3), np.uint8)
 
     # ?? RKNN ??
-    rknn = RKNN(verbose=True, verbose_file=log_file)
+    verbose = bool(log_file)
+    rknn = RKNN(verbose=verbose, verbose_file=log_file)
 
     ret = rknn.load_rknn(rknn_in)         
     ret = rknn.init_runtime(target=target_platform, eval_mem=True, rknn2precompile=True)
@@ -40,7 +41,8 @@ def convert_rknn(target, cfg_in, weight_in, dataset_in, rknn_out, log_file="rknn
     # exit()
 
      # Create RKNN object
-    rknn = RKNN(verbose=True, verbose_file=log_file)
+    verbose = bool(log_file)
+    rknn = RKNN(verbose=verbose, verbose_file=log_file)
     print(target, cfg_in, dataset_in, rknn_out)
 
 

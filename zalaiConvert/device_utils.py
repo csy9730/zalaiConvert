@@ -1,4 +1,5 @@
 import sys
+import os
 import os.path as osp
 import subprocess
 import time
@@ -31,6 +32,11 @@ def checkToNtb():
     """
         检测adb和ntb，并把adb切换成ntb设备，返回ntb设备检测错误码
     """
+    
+
+    os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin") + ";" + os.environ.get('path') 
+
+
     from rknn.api import RKNN
     adbs, ntbs = RKNN().list_devices()
     if not ntbs:

@@ -25,7 +25,9 @@ def model_convert(cfg):
         "cfg_in": cfg.model_file,
         "weight_in": cfg.model_weight_file, 
         "dataset_in": cfg.dataset_in,
-        "rknn_out": cfg.model_out_path
+        "rknn_out": cfg.model_out_path,
+        "log_file": None
+        # "rknn.log"
     }
 
     if source_platform in rk_source_platform_sets and target_platform in rk_target_platform_sets:        

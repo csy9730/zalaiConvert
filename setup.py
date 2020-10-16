@@ -10,7 +10,7 @@ PATH_ROOT = os.path.dirname(__file__)
 
 fpk = find_packages(where=".", exclude=["zalaiConvert.test", "zalaiConvert.demo",
                     "zalaiConvert.bench"])
-# fpk += ['zalaiConvert.cfg']
+fpk += ['zalaiConvert.bin']
 print(fpk)
 
 setup(
@@ -29,6 +29,7 @@ setup(
     include_package_data=True,  # 将数据文件也打包
     package_data={
          'zalaiConvert.cfg': ['*.json'],
+         'zalaiConvert.bin': ['*.exe', '*.dll'],
     },
 
     zip_safe=False,
