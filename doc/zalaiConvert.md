@@ -1,11 +1,44 @@
 # zalaiConvert
 
+
+
 - [ ] add: xxx
-- [ ] add：在哪里内置adb程序？
+- [ ] add: 添加反馈 : parse export success!
+- [ ] convertWrap2::解析 fps
+- [ ] 调整rknn.log
+- [ ] add: `python3 -m zalaiConvert.convertWrap -c foo.json`
+- [x] add：在哪里内置adb程序？
+add adb to whl or add to qml?
+adb程序很小，直接内置wheel进去。
+
+```
+
+                          Performance
+========================================================================
+Total Time(us): 106762
+FPS: 9.37
+========================================================================
+
+======================================================
+            Memory Profile Info Dump
+======================================================
+System memory:
+    maximum allocation : 39.08 MiB
+    total allocation   : 197.72 MiB
+NPU memory:
+    maximum allocation : 141.80 MiB
+    total allocation   : 143.33 MiB
+
+Total memory:
+    maximum allocation : 180.88 MiB
+    total allocation   : 341.04 MiB
+
+INFO: When evaluating memory usage, we need consider
+the size of model, current model size is: 58.87 MiB
+```
 
 
-python3 -m zalaiConvert.convertWrap -c foo.json
-
+## misc
 
 
 - [x] add: git
@@ -13,8 +46,8 @@ python3 -m zalaiConvert.convertWrap -c foo.json
 - [x] add: setup.py
 - [ ] add: logger
 - [ ] add: listDevice
-- [ ] add: `adb devices` 
-- [ ] `adb shell`
+- [x] add: `adb devices` 
+- [x] `adb shell`
 - [x] `series ssh shell` 切换成adb模式
 ` python -c "from rknn.api import RKNN;print(RKNN().list_devices())" `
 

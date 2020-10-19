@@ -35,7 +35,7 @@ def checkToNtb():
     
 
     os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin") + ";" + os.environ.get('path') 
-
+    os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "Library", "bin") + ";" + os.environ.get('path') 
 
     from rknn.api import RKNN
     adbs, ntbs = RKNN().list_devices()
