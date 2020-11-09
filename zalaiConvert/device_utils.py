@@ -28,7 +28,7 @@ def checkRknnDevice(args):
     return NtbDevice.NTB_FOUND_CODE
 
 
-def checkToNtb():
+def checkToNtb(args=None):
     """
         检测adb和ntb，并把adb切换成ntb设备，返回ntb设备检测错误码
     """
@@ -60,18 +60,18 @@ def checkToNtb():
         return NtbDevice.NTB_FOUND_CODE
 
 
-def parse_args():
+def parse_args(cmd=None):
     model_parser = argparse.ArgumentParser(description='rknn convert api.')
     # model_parser.add_argument('--config', dest='config', action='store', required=True)
 
-    model_args = model_parser.parse_args()
+    model_args = model_parser.parse_args(cmd)
     return model_args
 
 
 @fStdoutStatusDecorator(TrainProc.ON_START, TrainProc.ON_EXIT)
-def main():
-    # args = parse_args()
-    ret = checkToNtb()
+def main(cmd=None):
+    args = parse_args(cmd)
+    ret = checkToNtb(args)
     error = NtbDeviceInfo[ret]
     fStdoutDict({"errCode": ret, "error": error})
 

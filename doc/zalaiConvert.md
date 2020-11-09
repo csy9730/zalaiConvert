@@ -2,11 +2,12 @@
 
 
 
-- [ ] add: xxx
+- [ ] add: 
 - [ ] add: 添加反馈 : parse export success!
 - [ ] convertWrap2::解析 fps
 - [ ] 调整rknn.log
-- [ ] add: `python3 -m zalaiConvert.convertWrap -c foo.json`
+- [ ] tune: adb detect rknn devices
+- [x] add: `python3 -m zalaiConvert.convertWrap -c foo.json`
 - [x] add：在哪里内置adb程序？
 add adb to whl or add to qml?
 adb程序很小，直接内置wheel进去。
@@ -50,7 +51,8 @@ the size of model, current model size is: 58.87 MiB
 - [x] `adb shell`
 - [x] `series ssh shell` 切换成adb模式
 ` python -c "from rknn.api import RKNN;print(RKNN().list_devices())" `
-
+- [ ] bug: `RKNN().list_devices()` 无法发现rknn
+- [ ] 
 - [x] add: zalai::stdout
 - [ ] rm : tmp.t
 `from rknn.api.rknn_base import RKNNBase;RKNNBase().list_devices()`
