@@ -1,6 +1,6 @@
 # zalaiConvert
 
-
+## todo
 
 - [ ] add: 
 - [ ] add: 添加反馈 : parse export success!
@@ -39,8 +39,7 @@ the size of model, current model size is: 58.87 MiB
 ```
 
 
-## misc
-
+## todo2
 
 - [x] add: git
 - [x] add: requirements.txt
@@ -75,3 +74,5 @@ adb shell nohup start_usb.sh ntb
 
 进程调用=》flask服务器=》json协议
 process call => flask => return json 
+
+## misc

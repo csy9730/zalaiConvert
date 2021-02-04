@@ -14,9 +14,8 @@ def main(cmd=None):
                                      usage='''%s <command> [<args>]
 
                 Available sub-commands:
-                train                 Trains a model
-                predict               Predicts using a pretrained model
-                gencsv                generate csv file from data file or sample follder 
+                list                  list ntb devices
+                convert               convert using a pretrained model
                 ''' % prog_name)
 
     parser.add_argument('command', help='Subcommand to run')

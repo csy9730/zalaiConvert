@@ -28,6 +28,23 @@ def checkRknnDevice(args):
     return NtbDevice.NTB_FOUND_CODE
 
 
+def parse_adb(ret):
+    sp = ret.split(b'\n')
+    devs = []
+    if len(sp) >= 2:
+        for s in sp[1:]:
+            if s:
+                devs.append(s)
+    return devs
+
+
+def parseAdbStr(ss):
+    import re
+    pat = re.compile(r'([0-9a-fA-F]{8,}|null)\s+(?:device|unauthorized)')
+    fd = pat.findall(str(ss, encoding='utf-8'))
+    return fd
+
+
 def checkToNtb(args=None):
     """
         检测adb和ntb，并把adb切换成ntb设备，返回ntb设备检测错误码
@@ -44,18 +61,22 @@ def checkToNtb(args=None):
         # print(ret.stdout)
         if ret.returncode != 0: 
             return NtbDevice.ADB_ERROR_CODE
-        if b"0123456789ABCDEF" in ret.stdout:
-            ret = subprocess.run("adb shell nohup start_usb.sh ntb")  
-            if ret.returncode != 0:
-                return NtbDevice.NTB_SWITCH_ERRORR_CODE
-            time.sleep(5)
-            _, ntbs2 = RKNN().list_devices()
-            if not ntbs2:
-                return NtbDevice.NTB_NOT_FOUND_CODE
-            else:
-                return NtbDevice.NTB_FOUND_CODE
-        else:
-            return NtbDevice.DEVICE_NOT_FOUND_CODE
+        # print(ret.stdout)
+        devs = parseAdbStr(ret.stdout)
+        # print("devs", devs)
+        for dev in devs:
+            if dev:
+            # if b"0123456789ABCDEF" in ret.stdout:
+                ret = subprocess.run("adb shell nohup start_usb.sh ntb")  
+                if ret.returncode != 0:
+                    return NtbDevice.NTB_SWITCH_ERRORR_CODE
+                time.sleep(5)
+                _, ntbs2 = RKNN().list_devices()
+                if not ntbs2:
+                    return NtbDevice.NTB_NOT_FOUND_CODE
+                else:
+                    return NtbDevice.NTB_FOUND_CODE        
+        return NtbDevice.DEVICE_NOT_FOUND_CODE
     else:
         return NtbDevice.NTB_FOUND_CODE
 
