@@ -76,3 +76,8 @@ adb shell nohup start_usb.sh ntb
 process call => flask => return json 
 
 ## misc
+### NTB protocl
+Non-Transparent Bridge 
+`zal_rk130\Lib\site-packages\rknn\3rdparty\platform-tools\ntp\windows-x86_64\npu_transfer_proxy.exe`
+
+`taskkill /im npu_transfer_proxy.exe /f`
