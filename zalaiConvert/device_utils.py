@@ -6,16 +6,22 @@ import time
 import argparse
 import json
 
-from zalai.common.constant import TrainProc
-from zalai.common.stdout_status import fStdoutDict, fStdoutStatusDecorator
 
+from zalaiConvert.utils.common import dumpsStatusDec, TrainProc, dumpsDict
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), ".."))
 from zalaiConvert.utils.constant import NtbDevice, NtbDeviceInfo
 
-os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin") + ";" + os.environ.get('path') 
-os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "Library/bin") + ";" + os.environ.get('path') 
 
+if os.name == "nt":
+    PY = os.path.dirname(os.path.abspath(sys.executable))
+    os.environ['path'] = ";".join([
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin"),
+        os.path.join(PY, r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64"),
+        os.path.join(PY, r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64"),
+        os.path.join(PY, r"Library/bin"),
+        os.environ.get('path')
+    ])
 
 def checkRknnDevice(args):
     from rknn.api import RKNN
@@ -56,7 +62,7 @@ def checkToNtb(args=None):
     from rknn.api import RKNN
     adbs, ntbs = RKNN().list_devices()
     if not ntbs:
-        ret = subprocess.run("adb devices", stdout=subprocess.PIPE)
+        ret = subprocess.run(["adb", "devices"], stdout=subprocess.PIPE)
         # print(ret.stdout)
         if ret.returncode != 0: 
             return NtbDevice.ADB_ERROR_CODE
@@ -88,22 +94,22 @@ def parse_args(cmd=None):
     return model_args
 
 
-@fStdoutStatusDecorator(TrainProc.ON_START, TrainProc.ON_EXIT)
+@dumpsStatusDec(TrainProc.ON_START, TrainProc.ON_EXIT)
 def main(cmd=None):
     args = parse_args(cmd)
     ret = checkToNtb(args)
     error = NtbDeviceInfo[ret]
-    fStdoutDict({"errCode": ret, "error": error})
-
+    dumpsDict({"errCode": ret, "error": error})
 
 
 def killserver(cmds=None):
-    os.system("taskkill /im adb.exe /f")
-    os.system("taskkill /im npu_transfer_proxy.exe /f")
+    if os.name == "nt":
+        os.system("taskkill /im adb.exe /f")
+        os.system("taskkill /im npu_transfer_proxy.exe /f")
 
 
 def startserver(cmds=None):
-    npu = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), 
+    npu = os.path.join(PY, 
         r"Lib\site-packages\rknn\3rdparty\platform-tools\ntp\windows-x86_64\npu_transfer_proxy.exe")
     print(npu)
     os.system("adb.exe start-server")
