@@ -15,18 +15,27 @@ def main(cmd=None):
 
                 Available sub-commands:
                 list                  list ntb devices
+                killserver            kill adb server & ntb server
+                startserver           start adb server & ntb server
                 convert               convert using a pretrained model
+
                 ''' % prog_name)
 
     parser.add_argument('command', help='Subcommand to run')
     args = parser.parse_args(cmd[0:1])
-    if args.command in ["list", "convert"]:
+    if args.command in ["list", "convert", "killserver", "startserver"]:
         if args.command == "list":
             from zalaiConvert.device_utils import main as devices
             devices(cmd[1:])
         elif args.command == "convert":
             from zalaiConvert.convertWrap import main as convert
             convert(cmd[1:])   
+        elif args.command == "killserver":
+            from zalaiConvert.device_utils import killserver
+            killserver(cmd[1:])  
+        elif args.command == "startserver":
+            from zalaiConvert.device_utils import startserver
+            startserver(cmd[1:])  
     else:
         parser.print_help()
 

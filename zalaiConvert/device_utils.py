@@ -13,6 +13,9 @@ from zalai.common.stdout_status import fStdoutDict, fStdoutStatusDecorator
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), ".."))
 from zalaiConvert.utils.constant import NtbDevice, NtbDeviceInfo
 
+os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin") + ";" + os.environ.get('path') 
+os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "Library/bin") + ";" + os.environ.get('path') 
+
 
 def checkRknnDevice(args):
     from rknn.api import RKNN
@@ -50,10 +53,6 @@ def checkToNtb(args=None):
         检测adb和ntb，并把adb切换成ntb设备，返回ntb设备检测错误码
     """
     
-
-    os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin") + ";" + os.environ.get('path') 
-    os.environ['path'] = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "Library", "bin") + ";" + os.environ.get('path') 
-
     from rknn.api import RKNN
     adbs, ntbs = RKNN().list_devices()
     if not ntbs:
@@ -95,6 +94,21 @@ def main(cmd=None):
     ret = checkToNtb(args)
     error = NtbDeviceInfo[ret]
     fStdoutDict({"errCode": ret, "error": error})
+
+
+
+def killserver(cmds=None):
+    os.system("taskkill /im adb.exe /f")
+    os.system("taskkill /im npu_transfer_proxy.exe /f")
+
+
+def startserver(cmds=None):
+    npu = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), 
+        r"Lib\site-packages\rknn\3rdparty\platform-tools\ntp\windows-x86_64\npu_transfer_proxy.exe")
+    print(npu)
+    os.system("adb.exe start-server")
+    subprocess.Popen([npu])
+    # os.system(npu)
 
 
 if __name__ == "__main__":
