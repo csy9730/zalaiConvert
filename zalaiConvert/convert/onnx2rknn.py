@@ -8,12 +8,12 @@ from rknn.api import RKNN
 
 if os.name == "nt":
     PY = os.path.dirname(os.path.abspath(sys.executable))
-    os.environ['path'] = ";".join([
+    os.environ['PATH'] = ";".join([
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin"),
         os.path.join(PY, r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64"),
         os.path.join(PY, r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64"),
         os.path.join(PY, r"Library/bin"),
-        os.environ.get('path')
+        os.environ.get('PATH')
     ])
 
 def parse_args(cmds=None):
@@ -60,12 +60,12 @@ def model2Rknn(model, output, dataset, framework='onnx', **kwargs):
 
 def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=False, \
     verbose=None, normalize_params=None, device=None, epochs=-1, 
-    log_file=rknn_logfile, framework='onnx',
+    log_file=None, framework='onnx',
     **kwargs):
     if normalize_params is None:
         normalize_params = ['0', '0', '0', '1']
     # Create RKNN object
-    rknn = RKNN(verbose=verbose)
+    rknn = RKNN(verbose=verbose, verbose_file=log_file)
     
     # pre-process config
     print('--> config model')    

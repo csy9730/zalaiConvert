@@ -30,7 +30,10 @@ def model_convert(cfg):
         # "rknn.log"
     }
 
-    if source_platform in rk_source_platform_sets and target_platform in rk_target_platform_sets:        
-        rknn_c.__dict__[source_platform].__dict__[model_name].convert_rknn(**dct)
-    else:
-        print("exit.")
+    try:
+        if source_platform in rk_source_platform_sets and target_platform in rk_target_platform_sets:        
+            rknn_c.__dict__[source_platform].__dict__[model_name].convert_rknn(**dct)
+        else:
+            print("exit.")
+    except Exception as e:
+        print(e)
