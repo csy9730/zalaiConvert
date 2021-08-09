@@ -26,7 +26,7 @@ def parse_args(cmds=None):
     parser.add_argument('--do-quantization', action='store_true', help='model file path')
     parser.add_argument('--pre-compile', action='store_true', help='model file path')
 
-    parser.add_argument('--framework', default='onnx', help='model framework')
+    parser.add_argument('--framework', help='model framework')
     parser.add_argument('--darknet-cfg')
 
     parser.add_argument('--dataset', help='a txt file contain image paths')
@@ -35,7 +35,7 @@ def parse_args(cmds=None):
     parser.add_argument('--rknn-logfile') # "rknn.log"
 
     parser.add_argument('--rgb-reorder', action='store_true')
-    parser.add_argument('--normalize-params', action='append')
+    parser.add_argument('--normalize-params', nargs='*')
 
     parser.add_argument('--epochs', type=int, default=-1)
 
@@ -77,11 +77,11 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
     # Load tensorflow model
     print('--> Loading model')
     if framework == "pytorch":
-        ret = rknn.load_pytorch(model=model,input_size_list=[[3,512,512]])
+        ret = rknn.load_pytorch(model=model,input_size_list=[[3, 512, 512]])
     elif framework == "onnx":
         ret = rknn.load_onnx(model=model)
     elif framework == "darknet":
-        ret = rknn.load_darknet(model=darknet_cfg, weight=model)
+        ret = rknn.load_darknet(model=kwargs["darknet_cfg"], weight=model)
     else:
         print("not a framework", framework)
         return -1
@@ -158,6 +158,7 @@ def farward(img_path, device, **kwargs):
 
 def main(cmds=None):
     args = parse_args(cmds)
+    args.framework = args.framework or 'onnx'
     opt = vars(args)
     model = opt.pop("model");
     output = opt.pop("output");

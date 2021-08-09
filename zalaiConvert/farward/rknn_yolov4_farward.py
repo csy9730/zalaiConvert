@@ -1,20 +1,24 @@
 import os
 import sys
-import time
 import numpy as np
 import cv2
+from PIL import Image
 from rknn.api import RKNN
 
-# import torch
-
-GRID0 = 13
-GRID1 = 26
-GRID2 = 52
-
+GRID0 = 13 # 13
+GRID1 = GRID0*2
+GRID2 = GRID0*4
+LISTSIZE = 8 # 85  8
 SPAN = 3
+NUM_CLS = 3 # 80  3
 MAX_BOXES = 500
-OBJ_THRESH = 0.5
-NMS_THRESH = 0.5
+OBJ_THRESH = 0.6
+NMS_THRESH = 0.3
+WIDTH = GRID0 * 32
+
+
+CLASSES = ("helmet","person","hat")
+
 
 def activateEnv(pth=None):
     if pth is None:
@@ -36,7 +40,6 @@ def activateEnv(pth=None):
     os.environ['PATH'] = ';'.join(lst)
 
 activateEnv()
-
 
 def parse_model_cfg(path):
     with open(path, 'r') as f:
@@ -79,25 +82,11 @@ def parse_model_cfg(path):
 
     return mdefs
 
-
-def genImageDatasetList(data_dir, output=None):
-    lst = os.listdir(data_dir)
-    lst2 = []
-    for s in lst:
-        if os.path.splitext(s)[-1].lower() in ['.jpg', '.bmp', '.png']:
-            lst2.append(os.path.abspath(os.path.join(data_dir, s)))
-    if output:
-        with open(output, "w") as fp:
-            for s in lst2:
-                fp.write(s + '\n')
-    else:
-        return lst2
-
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def process(input, mask, anchors):
+def process(input, mask, anchors, width=WIDTH):
     """
         mask: [int]
         anchors: [[int, int],]
@@ -106,10 +95,14 @@ def process(input, mask, anchors):
         box_confidence:                 , normalize
         box_class_probs                 , normalize
     """
-    print(input.shape, "shape")
+    
     anchors = [anchors[i] for i in mask]
     grid_h, grid_w = map(int, input.shape[0:2])
 
+    box_confidence = input[..., 4]
+    obj_thresh = -np.log(1/OBJ_THRESH - 1)
+    pos = np.where(box_confidence > obj_thresh)
+    input = input[pos]
     box_confidence = sigmoid(input[..., 4])
     box_confidence = np.expand_dims(box_confidence, axis=-1)
 
@@ -117,18 +110,14 @@ def process(input, mask, anchors):
 
     box_xy = sigmoid(input[..., :2])
     box_wh = np.exp(input[..., 2:4])
-    box_wh = box_wh * anchors
-
-    col = np.tile(np.arange(0, grid_w), grid_w).reshape(-1, grid_w)
-    row = np.tile(np.arange(0, grid_h).reshape(-1, 1), grid_h)
-
-    col = col.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
-    row = row.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
-    grid = np.concatenate((col, row), axis=-1)
-
+    for idx, val in enumerate(pos[2]):
+        box_wh[idx] = box_wh[idx] * anchors[pos[2][idx]]
+    pos0 = np.array(pos[0])[:, np.newaxis]
+    pos1 = np.array(pos[1])[:, np.newaxis]
+    grid = np.concatenate((pos1, pos0), axis=1)
     box_xy += grid
     box_xy /= (grid_w, grid_h)
-    box_wh /= (416, 416)
+    box_wh /= (width, width)
     box_xy -= (box_wh / 2.)
     box = np.concatenate((box_xy, box_wh), axis=-1)
 
@@ -197,20 +186,25 @@ def nms_boxes(boxes, scores):
     return keep
 
 
-def yolov3_post_process(input_data, anchors=None):
-    # yolov3
-    masks = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
-    if anchors is None:
-        anchors = [[10, 17],  [19, 34],  [31, 62],  [34, 163],  [58, 9],  [63, 49], [107, 152], [142, 307], [282, 367]]
-    candbox = anchors # [[anchors[i], anchors[i+1]] for i in range(0, 18, 2)] 
-    print(candbox)
+def yolov3_post_process(input_data,rknn_name):
+    # # yolov3
+    # masks = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+    # anchors = [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45],
+    #             [59, 119], [116, 90], [156, 198], [373, 326]]
     # yolov3-tiny
-    # masks = [[3, 4, 5], [0, 1, 2]]
-    # candbox = [[10, 14], [23, 27], [37, 58], [81, 82], [135, 169], [344, 319]]
+    if 'tiny' in rknn_name:
+        masks = [[3,4,5],[0,1,2]]
+        anchors = [[10,14], [23,27], [37,58], [81,82], [135,169], [344,319]]
+    # elif 'yolov4' in rknn_name:
+    else:
+        masks = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+        # anchors = [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]]
+        anchors = [[ 8, 13], [17, 32], [28, 51], [39, 74], [56, 93], [67, 140], [108, 146], [140, 229], [239, 286]]
+        # anchors = [[12, 16], [19, 36], [40, 28], [36, 75], [76, 55], [72, 146], [142, 110], [192, 243], [459, 401]]
 
     boxes, classes, scores = [], [], []
     for input,mask in zip(input_data, masks):
-        b, c, s = process(input, mask, candbox)
+        b, c, s = process(input, mask, anchors)
         b, c, s = filter_boxes(b, c, s)
         boxes.append(b)
         classes.append(c)
@@ -219,6 +213,11 @@ def yolov3_post_process(input_data, anchors=None):
     boxes = np.concatenate(boxes)
     classes = np.concatenate(classes)
     scores = np.concatenate(scores)
+
+    # # Scale boxes back to original image shape.
+    # width, height = 416, 416 #shape[1], shape[0]
+    # image_dims = [width, height, width, height]
+    # boxes = boxes * image_dims
 
     nboxes, nclasses, nscores = [], [], []
     for c in set(classes):
@@ -343,8 +342,7 @@ def imagePadding(img, out_shape):
     # ratio = wanted_size[1] / tt_image.shape[0], wanted_size[0] / tt_image.shape[1]
     return rz_img, paddings
 
-
-def draw(image, boxes, scores, classes, class_list):
+def draw(image, boxes, scores, classes):
     """Draw the boxes on the image.
 
     # Argument:
@@ -356,25 +354,28 @@ def draw(image, boxes, scores, classes, class_list):
     """
     for box, score, cl in zip(boxes, scores, classes):
         x, y, w, h = box
-        print('class: {}, score: {}'.format(class_list[cl], score))
-        print('box normal coordinate left,top,right,down: [{}, {}, {}, {}]'.format(x, y, x+w, y+h))
+        print('\nclass: {}, score: {}'.format(CLASSES[cl], score))
+        print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(x, y, x+w, y+h))
         x *= image.shape[1]
         y *= image.shape[0]
         w *= image.shape[1]
         h *= image.shape[0]
-        left = max(0, np.floor(x + 0.5).astype(int))
-        top = max(0, np.floor(y + 0.5).astype(int))
+        top = max(0, np.floor(x + 0.5).astype(int))
+        left = max(0, np.floor(y + 0.5).astype(int))
         right = min(image.shape[1], np.floor(x + w + 0.5).astype(int))
         bottom = min(image.shape[0], np.floor(y + h + 0.5).astype(int))
 
-        cv2.rectangle(image, (left, top), (right, bottom), (255, 0, 0), 1)
-        cv2.putText(image, '{0} {1:.1f}'.format(class_list[cl], score),
-                    (left, top - 6),
+        #   print('class: {}, score: {}'.format(CLASSES[cl], score))
+        #   print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(top, left, right, bottom))
+
+        cv2.rectangle(image, (top, left), (right, bottom), (255, 0, 0), 2)
+        cv2.putText(image, '{0} {1:.2f}'.format(CLASSES[cl], score),
+                    (top, left - 6),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6, (0, 0, 255), 1)
+                    0.6, (0, 0, 255), 2)
 
-
-
+        #   print('class: {0}, score: {1:.2f}'.format(CLASSES[cl], score))
+        #   print('box coordinate x,y,w,h: {0}'.format(box))
 def rknn_query_model(model):
     rknn = RKNN() 
     mcfg = rknn.fetch_rknn_model_config(model)
@@ -399,7 +400,7 @@ def get_io_shape(mcfg):
 def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=None, **kwargs):
     rknn = RKNN(verbose=verbose)
     assert os.path.exists(model)
-    print('--> Loading model')  
+    print('--> Loading model')
     ret = rknn.load_rknn(model)
     if ret != 0:
         print('load_rknn failed')
@@ -407,185 +408,80 @@ def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=No
     print('Load done')
 
     print('--> Init runtime environment')
-    ret = rknn.init_runtime(target=device, device_id=device_id, eval_mem=False, rknn2precompile=rknn2precompile)
+    ret = rknn.init_runtime(target=device, device_id=device_id)
     if ret != 0:
         print('Init runtime environment failed')
         return None
     print('Init runtime done')
-
     return rknn
-
 def rknnPredict(inputs, rknn):
     outputs = rknn.inference(inputs=inputs)
     return outputs
 
-
-def preprocess(img, with_normalize=None, hwc_chw=None, **kwargs):
-    # print(img.shape)
-    # height, width = img.shape[:2]
-    # raw_img = img
-    WH = (416, 416)
-    if img.shape[0:2] != WH:
-        img = cv2.resize(img, WH)
-    # img = imagePadding(img, (256,256))[0]
-    input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-    input_image = input_image.astype(np.float32)
-
-    if not with_normalize:
-        mean = np.array([0, 0, 0], dtype=np.float32)
-        std = np.array([255, 255, 255], dtype=np.float32)
-        
-        input_image = (input_image/1 - mean) / std
-
-    if hwc_chw:
-        input_image = input_image.transpose([2, 0, 1])
-
-    return input_image
-
-
-COLOR_LIST = [[0,0,0],[0,0,128], [0,128,0], [128,0,0], [255,128,0], [128,0,255], [0, 255,128]]
-# COLOR_LIST = np.array(COLOR_LIST)
-
-def drawImagePoints(img, pred):
-    for p in pred:
-        cv2.circle(img, p, 3, (0,0,255))
-
-
-def draw_predict(img, preds):
-    for i in range(0, 68):
-        cv2.circle(img, (int(preds[i][0]), int(preds[i][1])), 2, (0,255,0), -1)
-
-
-def showImage(img, text="untitled"):
-    cv2.imshow(text, img)
-    if cv2.waitKey(1) == ord('q'):  # q to quit
-        raise StopIteration
-    cv2.waitKey()
-
-
 def parse_args(cmds=None):
     import argparse
     parser = argparse.ArgumentParser(description='Rknn predict & show key points')
-    parser.add_argument('model', help='model file path')
     parser.add_argument('--input', '-i', help='image file path')
     parser.add_argument('--output', '-o', help='save output image name')
-    parser.add_argument('--config')
-
-    parser.add_argument('--network', '--network-cfg', '-nw')
-    parser.add_argument('--use-padding', action='store_true', help='model file path')
+    parser.add_argument('--model', '-m')
+    parser.add_argument('--device')
+    parser.add_argument('--device-id')
     parser.add_argument('--save-img', action='store_true', help='model file path')
     parser.add_argument('--show-img', action='store_true', help='model file path')
-    parser.add_argument('--input-chw', action='store_true', help='model file path')
-    parser.add_argument('--device', help='device: rk1808, rk1126')
-    parser.add_argument('--device-id')
-    parser.add_argument('--task', choices=['segment', 'detect', 'classify', 'keypoint'], default='keypoint', help='device: rk1808, rk1126')
-    parser.add_argument('--mix-scale', type=float, help='segment task params: mix scale')
-    parser.add_argument('--verbose', action='store_true', help='verbose information')
-    parser.add_argument('--with-normalize', action='store_true', help='rknn with normalize')
-    parser.add_argument('--hwc-chw', action='store_true', help='image preprocess: from HWC to CHW')
-    parser.add_argument('--run-perf', action='store_true', help='eval perf')
+    parser.add_argument('--network', '--network-cfg', '-nw')
 
-    parser.add_argument('--save-npy', action='store_true')
-    parser.add_argument('--use-transfer', '-t', action='store_true')
-    parser.add_argument('--dataset', '-ds')
-    parser.add_argument('--weight', '-w')
-    
-    return parser.parse_args(cmds)
+    return parser.parse_args()
 
 
-def predictWrap(source, model_path, cfg=None, args=None):
-    rknn = getRknn(model_path, device=args.device, device_id=args.device_id)
+def predictWrap(imgPath, rknn_name, output, args):
+    rknn = getRknn(rknn_name, device=args.device, device_id=args.device_id)
     if rknn is None:
         exit(-1)
 
-    if cfg:
-        pmc = parse_model_cfg(cfg)
-        yolos = [s for s in pmc if s['type']=='yolo']
-        NUM_CLS = yolos[0]["classes"]
-        anchors = yolos[0]["anchors"]
+    img = cv2.imread(imgPath)
+    assert os.path.exists(imgPath)
+
+    img = cv2.resize(img, (WIDTH, WIDTH))
+    mat = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    preds = rknnPredict([mat], rknn)
+    # preds = rknn.inference(inputs=[mat])
+
+    print(preds[0].shape)
+
+    if 'tiny' not in rknn_name:
+        out_boxes, out_boxes2, out_boxes3 = preds
+        out_boxes = out_boxes.reshape(SPAN, LISTSIZE, GRID2, GRID2)
+        out_boxes2 = out_boxes2.reshape(SPAN, LISTSIZE, GRID1, GRID1)
+        out_boxes3 = out_boxes3.reshape(SPAN, LISTSIZE, GRID0, GRID0)
     else:
-        anchors = None
-        NUM_CLS = 2 # len(class_list)
+        out_boxes, out_boxes2 = preds
+        out_boxes = out_boxes.reshape(SPAN, LISTSIZE, GRID0, GRID0)
+        out_boxes2 = out_boxes2.reshape(SPAN, LISTSIZE, GRID1, GRID1)
 
-    class_list = tuple([str(i+1) for i in range(NUM_CLS)])
-    
+    input_data = []
+    input_data.append(np.transpose(out_boxes, (2, 3, 0, 1)))
+    input_data.append(np.transpose(out_boxes2, (2, 3, 0, 1)))
+    if 'tiny' not in rknn_name:
+        input_data.append(np.transpose(out_boxes3, (2, 3, 0, 1)))
 
-    img_paths, video_id = guessSource(source)
-    if img_paths:
-        imgs = genImgs(img_paths)
-        use_camera = False
-        print("use images")
-        title = "img_{i}"
-    else:
-        cap = cv2.VideoCapture(video_id)
-        imgs = generate_camera(cap)
-        use_camera = True
-        print("use camera")
-        title = "camera"
+    boxes, classes, scores = yolov3_post_process(input_data, rknn_name)
 
-    waitTime = 30 if use_camera else 0
-    W, H = 416, 416
-    LISTSIZE = NUM_CLS + 5
-    for i, img in enumerate(imgs):
-        if img.shape[0:2] != (W, H):
-            img = cv2.resize(img, (W, H))
-
-        img2 = preprocess(img, with_normalize=args.with_normalize, hwc_chw=args.hwc_chw)
-        # print(img.shape)
-        t0 = time.time()
-        pred = rknnPredict([img2], rknn)
-        print("time: ", time.time() - t0)
-        # print("pred", pred, pred[0].shape)
-        # print("shape", pred[0].shape)
-
-        input_data = [
-            np.transpose(pred[0].reshape(SPAN, LISTSIZE, GRID0, GRID0), (2, 3, 0, 1)),
-            np.transpose(pred[1].reshape(SPAN, LISTSIZE, GRID1, GRID1), (2, 3, 0, 1)),
-            np.transpose(pred[2].reshape(SPAN, LISTSIZE, GRID2, GRID2), (2, 3, 0, 1))
-        ]
-
-        boxes, classes, scores = yolov3_post_process(input_data, anchors)
-        if boxes is not None:
-            draw(img, boxes, scores, classes, class_list)
-    
-        # preds = postProcess(pred[0])
-    
-        # if args.save_npy:
-        #     np.save('out_{0}.npy'.format(i=i), pred[0])
-        
-        # draw_predict(img, preds)
-
-        # print(preds, preds.shape)
-        if args.save_img:
-            cv2.imwrite(args.output.format(i=i), img.astype(np.uint8))
-
-        if args.show_img:
-            cv2.imshow(title.format(i=i), img)
-            k = cv2.waitKey(waitTime)
-            if k == 27:
-                break
-
-    if use_camera:
-        cap.release()
-
+    if boxes is not None:
+        draw(img, boxes, scores, classes)
+    cv2.imwrite(output, img)
+    # cv2.imshow("results", img)
+    # cv2.waitKey(0)
     cv2.destroyAllWindows()
     rknn.release()
 
-
 def main(cmds=None):
     args = parse_args(cmds)
-    model_path = args.model 
-    img_path = args.input
 
-    if args.output:
-        args.save_img = True
-    elif args.output is None and args.save_img:
-        args.output = 'out.jpg'
-
-    predictWrap(img_path, model_path, args.network, args)
+    predictWrap(args.input, args.model, args.output, args)
     print("__________________exit__________________")
 
-if __name__ == "__main__":
-    # cmds += ['--use-padding', '--input-chw', '--device', 'rk1808', '--save-img', '--task', 'segment']
+if __name__ == '__main__':
+    cmds = ['-i', './10.jpg', '-o', 'save_10_rk140_dev.png', '-m', 'test_NQ.rknn', '--device', "rk1808"]
+    cmds = ['-i', './1015.jpg', '-o', 'save_1015.png', '-m', 'test_NQ.rknn']
     main()
