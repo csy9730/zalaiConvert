@@ -106,11 +106,14 @@ def killserver(cmds=None):
     if os.name == "nt":
         os.system("taskkill /im adb.exe /f")
         os.system("taskkill /im npu_transfer_proxy.exe /f")
+    else:
+        os.system("kill -9 $(pidof adb)")
+        os.system("kill -9 $(pidof npu_transfer_proxy)")
 
 
 def startserver(cmds=None):
     npu = os.path.join(PY, 
-        r"Lib\site-packages\rknn\3rdparty\platform-tools\ntp\windows-x86_64\npu_transfer_proxy.exe")
+        r"Lib/site-packages/rknn/3rdparty/platform-tools/ntp/windows-x86_64/npu_transfer_proxy")
     print(npu)
     os.system("adb.exe start-server")
     subprocess.Popen([npu])
