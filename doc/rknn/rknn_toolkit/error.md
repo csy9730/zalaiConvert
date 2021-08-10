@@ -2,11 +2,72 @@
 
 ## rknn
 
+
+### RKNN init failed. error code: RKNN_ERR_DEVICE_UNAVAILABLE
+[无法开启NPU，推理报错](http://t.rock-chips.com/forum.php?mod=viewthread&tid=175)
+
+```
+0123456789ABCDEF
+*************************
+None
+E NPUTransfer: Cannot connect to proxy: cannot connect to 127.0.0.1:11808: Unknown error
+E RKNNAPI: rknn_init,  driver open fail!  ret = -4!
+E Catch exception when init runtime!
+E Traceback (most recent call last):
+E   File "rknn\api\rknn_base.py", line 1154, in rknn.api.rknn_base.RKNNBase.init_runtime
+E   File "rknn\api\rknn_runtime.py", line 356, in rknn.api.rknn_runtime.RKNNRuntime.build_graph
+E Exception: RKNN init failed. error code: RKNN_ERR_DEVICE_UNAVAILABLE
+E Current device id is: None
+E Devices connected:
+E ['0123456789ABCDEF']
+Init runtime environment failed
+```
+
+设备断电，重启设备，usb设备重新插拔。
+
 ### RKNN_ERR_MODEL_INVALID
 
 ```
 E Exception: RKNN init failed. error code: RKNN_ERR_MODEL_INVALID
 ```
+### Init runtime environment failed!
+
+```
+(rk_1_4) ➜  2 ./runs.sh
+--> config model
+done
+--> Loading model
+/home/zal/anaconda3/envs/rk_1_4/lib/python3.6/site-packages/onnx_tf/common/__init__.py:87: UserWarning: FrontendHandler.get_outputs_names is deprecated. It will be removed in future release.. Use node.outputs instead.
+  warnings.warn(message)
+done
+--> Building model
+W The target_platform is not set in config, using default target platform rk1808.
+W The channel_mean_value filed will not be used in the future!
+done
+E Using device with adb mode to init runtime, but npu_transfer_proxy is running, it may cause conflict. Please terminate npu_transfer_proxy first.
+E Catch exception when init runtime!
+E Traceback (most recent call last):
+E   File "rknn/api/rknn_base.py", line 1128, in rknn.api.rknn_base.RKNNBase.init_runtime
+E   File "rknn/api/rknn_runtime.py", line 168, in rknn.api.rknn_runtime.RKNNRuntime.__init__
+E   File "rknn/api/rknn_platform_utils.py", line 296, in rknn.api.rknn_platform_utils.start_ntp_or_adb
+E Exception: Init runtime environment failed!
+E Current device id is: None
+E Devices connected:
+E ['4486dcfc35a505c0']
+Init runtime environment failed
+(rk_1_4) ➜  2 adb devices
+```
+问题分析：
+npu_transfer_proxy 是pc端windows/linux的npu工具，rk板子也没这玩意。
+
+``` bash
+# 查看 pid
+ps -ef |grep npu_transfer_proxy
+
+# 杀死pid
+kill -9 xxx 
+```
+
 ## onnx
 
 

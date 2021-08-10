@@ -1,24 +1,30 @@
-# rknn
+# rknn.bin.visualization
 
-## rknn.api.rknn
+## arch
 
-## rknn.bin.visualization
+可视化工具visualization，可以执行模型转化功能。
 
-通过visualization脚本启动 窗口和后台flask服务。
+该工具是CS架构。通过引导脚本启动窗口程序和后台flask服务。
 
-父进程：visualization脚本
-子进程：window (rknn.exe)
-子进程：后台flask服务
+引导进程：`rknn\bin\visualization.py` 脚本
+窗口进程：window `rknn\visualization\front_end_win\rknn.exe`
+服务进程：后台flask服务,该服务可以启动模型转换子进程。
+
+
+### window
+
+rknn.exe 窗口程序位于：`Lib\site-packages\rknn\visualization\front_end_win\rknn.exe`
+
+该程序是基于electron框架构建，使用html5技术实现桌面界面程序。
 
 ### visualization
-~\Lib\site-packages\rknn\bin\visualization.py
+`Lib\site-packages\rknn\bin\visualization.py`，该脚本是引导程序，可以启动`rknn.exe`和`flask`服务。
+
 ``` python
 def start_run_server(server_flag_file, host, PORT, server_log, MAX_WINDOW):
     # 开启最小server端
     s_p = Process(target=RKNNtoolkit_server, args=(host, PORT, server_log, MAX_WINDOW), name='RKNNtoolkit_server')
     s_p.start()
-
-
 
 def open_window(host, port):
     os.chdir(os.path.dirname(__file__))
@@ -128,5 +134,3 @@ def RKNNtoolkit_server(host='127.0.0.1', port=5000, sys_log_file='RKNN_toolkit.l
     app.run(host=host, port=port)
 ```
 
-### window
-~\Lib\site-packages\rknn\visualization\front_end_win\rknn.exe

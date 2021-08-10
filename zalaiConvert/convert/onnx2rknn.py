@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import numpy as np
 import cv2
 
@@ -21,6 +22,7 @@ def parse_args(cmds=None):
     parser = argparse.ArgumentParser(description='Rknn converter')
     parser.add_argument('model', help='model file path')
     parser.add_argument('--output', '-o', default='out.rknn', help='save output image name')
+    parser.add_argument('--config', '-c')
 
     parser.add_argument('--device', choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
     parser.add_argument('--do-quantization', action='store_true', help='model file path')
@@ -36,6 +38,7 @@ def parse_args(cmds=None):
 
     parser.add_argument('--rgb-reorder', action='store_true')
     parser.add_argument('--normalize-params', nargs='*')
+    parser.add_argument('--quantized-algorithm', default='normal')
 
     parser.add_argument('--epochs', type=int, default=-1)
 
@@ -54,13 +57,13 @@ def model2Rknn(model, output, dataset, framework='onnx', **kwargs):
         return onnxmodel2Rknn(model, output, dataset, framework='pytorch', **kwargs)
     elif framework == 'tensorflow':
         return onnxmodel2Rknn(model, output, dataset, framework='tensorflow', **kwargs)
-    elif framework == 'caffee':
-        return onnxmodel2Rknn(model, output, dataset, framework='caffee', **kwargs)
+    elif framework in ['caffee', 'tflite', 'mxnet']:
+        return onnxmodel2Rknn(model, output, dataset, framework=framework, **kwargs)
 
 
 def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=False, \
     verbose=None, normalize_params=None, device=None, epochs=-1, 
-    log_file=None, framework='onnx',
+    log_file=None, framework='onnx', quantized_algorithm='normal',
     **kwargs):
     if normalize_params is None:
         normalize_params = ['0', '0', '0', '1']
@@ -70,7 +73,7 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
     # pre-process config
     print('--> config model')    
     rknn.config(channel_mean_value=' '.join(normalize_params), reorder_channel='0 1 2',\
-        epochs=epochs)    
+        epochs=epochs, quantized_algorithm=quantized_algorithm)    
     # , target_platform=[target]
     print('done')
 
@@ -80,8 +83,19 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
         ret = rknn.load_pytorch(model=model,input_size_list=[[3, 512, 512]])
     elif framework == "onnx":
         ret = rknn.load_onnx(model=model)
+    elif framework == "tensorflow":
+        rknn.load_tensorflow(tf_pb = model,
+            inputs = input_node,
+            outputs = output_node,
+            input_size_list=[[image_size, image_size, image_channel]])
+    elif framework == "tflite":
+        ret = rknn.load_tflite(model=model)
     elif framework == "darknet":
         ret = rknn.load_darknet(model=kwargs["darknet_cfg"], weight=model)
+    elif framework == "caffe":
+        ret = rknn.load_caffe(model=kwargs["darknet_cfg"], proto="caffe", blobs=model)
+    elif framework == "mxnet":
+        ret = rknn.load_mxnet(model=kwargs["darknet_cfg"], params=model, input_size_list=[[image_channel, image_size, image_size]])
     else:
         print("not a framework", framework)
         return -1
@@ -115,17 +129,22 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
         print('Export mobilenet_v1.rknn failed!')
         return ret
 
+    if kwargs.get("use_evalmemory"):
+        memory_detail = rknn.eval_memory()
+        print(memory_detail)
+
     if kwargs.get("use_accanalyze"):
         print('--> Begin analysis model accuracy')
         perf_ana = rknn.accuracy_analysis(inputs=dataset, target=device)
         print(perf_ana)
 
+
+
     print('done')
     rknn.release()
     return 0
 
-def farward(img_path, device, **kwargs):
-    # todo
+def farward(img_path, device=None, **kwargs):
     rknn = RKNN()
 
     im = cv2.imread(img_path)
@@ -152,14 +171,18 @@ def farward(img_path, device, **kwargs):
 
     rknn.eval_perf(inputs=[im])
 
-    memory_detail = rknn.eval_memory()
-
     rknn.release()
 
 def main(cmds=None):
     args = parse_args(cmds)
     args.framework = args.framework or 'onnx'
     opt = vars(args)
+
+    if args.config and os.path.exists(args.config):
+        with open(args.config, 'r') as fp:
+            dct = json.load(fp)
+            opt.update(dct)
+
     model = opt.pop("model");
     output = opt.pop("output");
     dataset = opt.pop("dataset")

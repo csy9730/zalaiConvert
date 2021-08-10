@@ -1,0 +1,2303 @@
+{
+    "target_platform": [
+        "RK1808"
+    ],
+    "network_platform": "caffe",
+    "ori_network_platform": "caffe",
+    "input_fmt": 0,
+    "input_transpose": 1,
+    "name": "CatDog6",
+    "version": "1.4.1b5",
+    "ovxlib_version": "1.1.12",
+    "node_num": 37,
+    "norm_tensor_num": 2,
+    "const_tensor_num": 32,
+    "virtual_tensor_num": 37,
+    "optimization_level": 3,
+    "mean_value": [
+        128.0,
+        128.0,
+        128.0,
+        128.0
+    ],
+    "mean_value_chns": [
+        4
+    ],
+    "reorder": [
+        0,
+        1,
+        2
+    ],
+    "input_num": 1,
+    "output_num": 1,
+    "pre_compile": 0,
+    "case_type": -1,
+    "nodes": [
+        {
+            "lid": "convolution_at_input0.1_52",
+            "name": "convolution_at_input0.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 52,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 64,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input2.1_50",
+            "name": "relu_at_input2.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 50,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "convolution_at_input3.1_49",
+            "name": "convolution_at_input3.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 49,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 64,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input5.1_47",
+            "name": "relu_at_input5.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 47,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "max_pool2d_at_input6.1_46",
+            "name": "max_pool2d_at_input6.1",
+            "op": "VSI_NN_OP_POOL",
+            "uid": 46,
+            "input_num": 1,
+            "output_num": 1,
+            "nn": {
+                "pool": {
+                    "ksize": [
+                        2,
+                        2
+                    ],
+                    "stride": [
+                        2,
+                        2
+                    ],
+                    "pad": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "type": "VX_CONVOLUTIONAL_NETWORK_POOLING_MAX",
+                    "round_type": "VSI_NN_ROUND_FLOOR"
+                }
+            },
+            "vx": {
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "convolution_at_input7.1_45",
+            "name": "convolution_at_input7.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 45,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 128,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input9.1_43",
+            "name": "relu_at_input9.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 43,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "convolution_at_input10.1_42",
+            "name": "convolution_at_input10.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 42,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 128,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input12.1_40",
+            "name": "relu_at_input12.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 40,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "max_pool2d_at_input13.1_39",
+            "name": "max_pool2d_at_input13.1",
+            "op": "VSI_NN_OP_POOL",
+            "uid": 39,
+            "input_num": 1,
+            "output_num": 1,
+            "nn": {
+                "pool": {
+                    "ksize": [
+                        2,
+                        2
+                    ],
+                    "stride": [
+                        2,
+                        2
+                    ],
+                    "pad": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "type": "VX_CONVOLUTIONAL_NETWORK_POOLING_MAX",
+                    "round_type": "VSI_NN_ROUND_FLOOR"
+                }
+            },
+            "vx": {
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "convolution_at_input14.1_38",
+            "name": "convolution_at_input14.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 38,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 256,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input16.1_36",
+            "name": "relu_at_input16.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 36,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "convolution_at_input17.1_35",
+            "name": "convolution_at_input17.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 35,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 256,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input19.1_33",
+            "name": "relu_at_input19.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 33,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "convolution_at_input20.1_32",
+            "name": "convolution_at_input20.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 32,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 256,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input22.1_30",
+            "name": "relu_at_input22.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 30,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "max_pool2d_at_input23.1_29",
+            "name": "max_pool2d_at_input23.1",
+            "op": "VSI_NN_OP_POOL",
+            "uid": 29,
+            "input_num": 1,
+            "output_num": 1,
+            "nn": {
+                "pool": {
+                    "ksize": [
+                        2,
+                        2
+                    ],
+                    "stride": [
+                        2,
+                        2
+                    ],
+                    "pad": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "type": "VX_CONVOLUTIONAL_NETWORK_POOLING_MAX",
+                    "round_type": "VSI_NN_ROUND_FLOOR"
+                }
+            },
+            "vx": {
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "convolution_at_input24.1_28",
+            "name": "convolution_at_input24.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 28,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 512,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input26.1_26",
+            "name": "relu_at_input26.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 26,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "convolution_at_input27.1_25",
+            "name": "convolution_at_input27.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 25,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 512,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input29.1_23",
+            "name": "relu_at_input29.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 23,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "convolution_at_input30.1_22",
+            "name": "convolution_at_input30.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 22,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 512,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input32.1_20",
+            "name": "relu_at_input32.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 20,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "max_pool2d_at_input33.1_19",
+            "name": "max_pool2d_at_input33.1",
+            "op": "VSI_NN_OP_POOL",
+            "uid": 19,
+            "input_num": 1,
+            "output_num": 1,
+            "nn": {
+                "pool": {
+                    "ksize": [
+                        2,
+                        2
+                    ],
+                    "stride": [
+                        2,
+                        2
+                    ],
+                    "pad": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "type": "VX_CONVOLUTIONAL_NETWORK_POOLING_MAX",
+                    "round_type": "VSI_NN_ROUND_FLOOR"
+                }
+            },
+            "vx": {
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "convolution_at_input34.1_18",
+            "name": "convolution_at_input34.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 18,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 512,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input36.1_16",
+            "name": "relu_at_input36.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 16,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "convolution_at_input37.1_15",
+            "name": "convolution_at_input37.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 15,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 512,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input39.1_13",
+            "name": "relu_at_input39.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 13,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "convolution_at_input40.1_12",
+            "name": "convolution_at_input40.1",
+            "op": "VSI_NN_OP_CONV2D",
+            "uid": 12,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "conv2d": {
+                    "ksize": [
+                        3,
+                        3
+                    ],
+                    "weights": 512,
+                    "stride": [
+                        1,
+                        1
+                    ],
+                    "pad": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "group": 1,
+                    "dilation": [
+                        1,
+                        1
+                    ],
+                    "multiplier": 0
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input42.1_10",
+            "name": "relu_at_input42.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 10,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "max_pool2d_at_x.1_9",
+            "name": "max_pool2d_at_x.1",
+            "op": "VSI_NN_OP_POOL",
+            "uid": 9,
+            "input_num": 1,
+            "output_num": 1,
+            "nn": {
+                "pool": {
+                    "ksize": [
+                        2,
+                        2
+                    ],
+                    "stride": [
+                        2,
+                        2
+                    ],
+                    "pad": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "type": "VX_CONVOLUTIONAL_NETWORK_POOLING_MAX",
+                    "round_type": "VSI_NN_ROUND_FLOOR"
+                }
+            },
+            "vx": {
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "view_at_input43.1_8",
+            "name": "view_at_input43.1",
+            "op": "VSI_NN_OP_RESHAPE",
+            "uid": 8,
+            "input_num": 1,
+            "output_num": 1,
+            "nn": {
+                "reshape": {
+                    "size": [
+                        -1,
+                        1
+                    ],
+                    "dim_num": 2
+                }
+            }
+        },
+        {
+            "lid": "addmm_at_input45.1_6",
+            "name": "addmm_at_input45.1",
+            "op": "VSI_NN_OP_FCL",
+            "uid": 6,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "fcl": {
+                    "weights": 4096
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input46.1_5",
+            "name": "relu_at_input46.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 5,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "addmm_at_input48.1_3",
+            "name": "addmm_at_input48.1",
+            "op": "VSI_NN_OP_FCL",
+            "uid": 3,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "fcl": {
+                    "weights": 4096
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        },
+        {
+            "lid": "relu_at_input49.1_2",
+            "name": "relu_at_input49.1",
+            "op": "VSI_NN_OP_RELU",
+            "uid": 2,
+            "input_num": 1,
+            "output_num": 1
+        },
+        {
+            "lid": "addmm_at_592_1",
+            "name": "addmm_at_592",
+            "op": "VSI_NN_OP_FCL",
+            "uid": 1,
+            "input_num": 3,
+            "output_num": 1,
+            "nn": {
+                "fcl": {
+                    "weights": 2
+                }
+            },
+            "vx": {
+                "overflow_policy": "VX_CONVERT_POLICY_WRAP",
+                "rounding_policy": "VX_ROUND_POLICY_TO_ZERO",
+                "down_scale_size_rounding": "VX_CONVOLUTIONAL_NETWORK_DS_SIZE_ROUNDING_FLOOR"
+            }
+        }
+    ],
+    "norm_tensor": [
+        {
+            "tensor_id": 0,
+            "size": [
+                2,
+                1
+            ],
+            "dim_num": 2,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "url": "output_of_addmm_at_592_0"
+        },
+        {
+            "tensor_id": 1,
+            "size": [
+                224,
+                224,
+                3,
+                1
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "url": "input_of_graph/out1_53"
+        }
+    ],
+    "const_tensor": [
+        {
+            "tensor_id": 0,
+            "size": [
+                3,
+                3,
+                3,
+                64
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 239124744,
+            "len": 3456
+        },
+        {
+            "tensor_id": 1,
+            "size": [
+                64
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 239124488,
+            "len": 256
+        },
+        {
+            "tensor_id": 2,
+            "size": [
+                3,
+                3,
+                64,
+                64
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 249458056,
+            "len": 73728
+        },
+        {
+            "tensor_id": 3,
+            "size": [
+                64
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 249457800,
+            "len": 256
+        },
+        {
+            "tensor_id": 4,
+            "size": [
+                3,
+                3,
+                64,
+                128
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 268414856,
+            "len": 147456
+        },
+        {
+            "tensor_id": 5,
+            "size": [
+                128
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 268414344,
+            "len": 512
+        },
+        {
+            "tensor_id": 6,
+            "size": [
+                3,
+                3,
+                128,
+                128
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 239128712,
+            "len": 294912
+        },
+        {
+            "tensor_id": 7,
+            "size": [
+                128
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 239128200,
+            "len": 512
+        },
+        {
+            "tensor_id": 8,
+            "size": [
+                3,
+                3,
+                128,
+                256
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 239424648,
+            "len": 589824
+        },
+        {
+            "tensor_id": 9,
+            "size": [
+                256
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 239423624,
+            "len": 1024
+        },
+        {
+            "tensor_id": 10,
+            "size": [
+                3,
+                3,
+                256,
+                256
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 240015496,
+            "len": 1179648
+        },
+        {
+            "tensor_id": 11,
+            "size": [
+                256
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 240014472,
+            "len": 1024
+        },
+        {
+            "tensor_id": 12,
+            "size": [
+                3,
+                3,
+                256,
+                256
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 241196168,
+            "len": 1179648
+        },
+        {
+            "tensor_id": 13,
+            "size": [
+                256
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 241195144,
+            "len": 1024
+        },
+        {
+            "tensor_id": 14,
+            "size": [
+                3,
+                3,
+                256,
+                512
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 242377864,
+            "len": 2359296
+        },
+        {
+            "tensor_id": 15,
+            "size": [
+                512
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 242375816,
+            "len": 2048
+        },
+        {
+            "tensor_id": 16,
+            "size": [
+                3,
+                3,
+                512,
+                512
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 244739208,
+            "len": 4718592
+        },
+        {
+            "tensor_id": 17,
+            "size": [
+                512
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 244737160,
+            "len": 2048
+        },
+        {
+            "tensor_id": 18,
+            "size": [
+                3,
+                3,
+                512,
+                512
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 249533832,
+            "len": 4718592
+        },
+        {
+            "tensor_id": 19,
+            "size": [
+                512
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 249531784,
+            "len": 2048
+        },
+        {
+            "tensor_id": 20,
+            "size": [
+                3,
+                3,
+                512,
+                512
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 254254472,
+            "len": 4718592
+        },
+        {
+            "tensor_id": 21,
+            "size": [
+                512
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 254252424,
+            "len": 2048
+        },
+        {
+            "tensor_id": 22,
+            "size": [
+                3,
+                3,
+                512,
+                512
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 258975112,
+            "len": 4718592
+        },
+        {
+            "tensor_id": 23,
+            "size": [
+                512
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 258973064,
+            "len": 2048
+        },
+        {
+            "tensor_id": 24,
+            "size": [
+                3,
+                3,
+                512,
+                512
+            ],
+            "dim_num": 4,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 263695752,
+            "len": 4718592
+        },
+        {
+            "tensor_id": 25,
+            "size": [
+                512
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 263693704,
+            "len": 2048
+        },
+        {
+            "tensor_id": 26,
+            "size": [
+                25088,
+                4096
+            ],
+            "dim_num": 2,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 32776,
+            "len": 205520896
+        },
+        {
+            "tensor_id": 27,
+            "size": [
+                4096
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 16392,
+            "len": 16384
+        },
+        {
+            "tensor_id": 28,
+            "size": [
+                4096,
+                4096
+            ],
+            "dim_num": 2,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 205570056,
+            "len": 33554432
+        },
+        {
+            "tensor_id": 29,
+            "size": [
+                4096
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 205553672,
+            "len": 16384
+        },
+        {
+            "tensor_id": 30,
+            "size": [
+                4096,
+                2
+            ],
+            "dim_num": 2,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            },
+            "offset": 8,
+            "len": 16384
+        },
+        {
+            "tensor_id": 31,
+            "size": [
+                2
+            ],
+            "dim_num": 1,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT32"
+            },
+            "offset": 0,
+            "len": 8
+        }
+    ],
+    "virtual_tensor": [
+        {
+            "node_id": 0,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 1,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 2,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 3,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 4,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 5,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 6,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 7,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 8,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 9,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 10,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 11,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 12,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 13,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 14,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 15,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 16,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 17,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 18,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 19,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 20,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 21,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 22,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 23,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 24,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 25,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 26,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 27,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 28,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 29,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 30,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 31,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 32,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 33,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 34,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        },
+        {
+            "node_id": 35,
+            "output_port": 0,
+            "dtype": {
+                "qnt_type": "VSI_NN_QNT_TYPE_NONE",
+                "vx_type": "VSI_NN_TYPE_FLOAT16"
+            }
+        }
+    ],
+    "connection": [
+        {
+            "node_id": 0,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_tensor": {
+                "type": "norm_tensor",
+                "tensor_id": 1
+            }
+        },
+        {
+            "node_id": 36,
+            "left": "output",
+            "left_tensor_id": 0,
+            "right_tensor": {
+                "type": "norm_tensor",
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 0,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 0,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 1
+            }
+        },
+        {
+            "node_id": 1,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 0,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 2,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 1,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 2,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 2
+            }
+        },
+        {
+            "node_id": 2,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 3
+            }
+        },
+        {
+            "node_id": 3,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 2,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 4,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 3,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 5,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 4,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 5,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 4
+            }
+        },
+        {
+            "node_id": 5,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 5
+            }
+        },
+        {
+            "node_id": 6,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 5,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 7,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 6,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 7,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 6
+            }
+        },
+        {
+            "node_id": 7,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 7
+            }
+        },
+        {
+            "node_id": 8,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 7,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 9,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 8,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 10,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 9,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 10,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 8
+            }
+        },
+        {
+            "node_id": 10,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 9
+            }
+        },
+        {
+            "node_id": 11,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 10,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 12,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 11,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 12,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 10
+            }
+        },
+        {
+            "node_id": 12,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 11
+            }
+        },
+        {
+            "node_id": 13,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 12,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 14,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 13,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 14,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 12
+            }
+        },
+        {
+            "node_id": 14,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 13
+            }
+        },
+        {
+            "node_id": 15,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 14,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 16,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 15,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 17,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 16,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 17,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 14
+            }
+        },
+        {
+            "node_id": 17,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 15
+            }
+        },
+        {
+            "node_id": 18,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 17,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 19,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 18,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 19,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 16
+            }
+        },
+        {
+            "node_id": 19,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 17
+            }
+        },
+        {
+            "node_id": 20,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 19,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 21,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 20,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 21,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 18
+            }
+        },
+        {
+            "node_id": 21,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 19
+            }
+        },
+        {
+            "node_id": 22,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 21,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 23,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 22,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 24,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 23,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 24,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 20
+            }
+        },
+        {
+            "node_id": 24,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 21
+            }
+        },
+        {
+            "node_id": 25,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 24,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 26,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 25,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 26,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 22
+            }
+        },
+        {
+            "node_id": 26,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 23
+            }
+        },
+        {
+            "node_id": 27,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 26,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 28,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 27,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 28,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 24
+            }
+        },
+        {
+            "node_id": 28,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 25
+            }
+        },
+        {
+            "node_id": 29,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 28,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 30,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 29,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 31,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 30,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 32,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 31,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 32,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 26
+            }
+        },
+        {
+            "node_id": 32,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 27
+            }
+        },
+        {
+            "node_id": 33,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 32,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 34,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 33,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 34,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 28
+            }
+        },
+        {
+            "node_id": 34,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 29
+            }
+        },
+        {
+            "node_id": 35,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 34,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 36,
+            "left": "input",
+            "left_tensor_id": 0,
+            "right_node": {
+                "node_id": 35,
+                "tensor_id": 0
+            }
+        },
+        {
+            "node_id": 36,
+            "left": "input",
+            "left_tensor_id": 1,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 30
+            }
+        },
+        {
+            "node_id": 36,
+            "left": "input",
+            "left_tensor_id": 2,
+            "right_tensor": {
+                "type": "const_tensor",
+                "tensor_id": 31
+            }
+        }
+    ],
+    "graph": [
+        {
+            "left": "output",
+            "left_tensor_id": 0,
+            "right": "norm_tensor",
+            "right_tensor_id": 0
+        },
+        {
+            "left": "input",
+            "left_tensor_id": 0,
+            "right": "norm_tensor",
+            "right_tensor_id": 1
+        }
+    ]
+}

@@ -1,83 +1,37 @@
 # zalaiConvert
 
-## todo
-
-- [ ] add: 
-- [ ] add: 添加反馈 : parse export success!
-- [ ] convertWrap2::解析 fps
-- [ ] 调整rknn.log
-- [ ] tune: adb detect rknn devices
-- [x] add: `python3 -m zalaiConvert.convertWrap -c foo.json`
-- [x] add：在哪里内置adb程序？
-add adb to whl or add to qml?
-adb程序很小，直接内置wheel进去。
-
-```
-
-                          Performance
-========================================================================
-Total Time(us): 106762
-FPS: 9.37
-========================================================================
-
-======================================================
-            Memory Profile Info Dump
-======================================================
-System memory:
-    maximum allocation : 39.08 MiB
-    total allocation   : 197.72 MiB
-NPU memory:
-    maximum allocation : 141.80 MiB
-    total allocation   : 143.33 MiB
-
-Total memory:
-    maximum allocation : 180.88 MiB
-    total allocation   : 341.04 MiB
-
-INFO: When evaluating memory usage, we need consider
-the size of model, current model size is: 58.87 MiB
-```
-
-
-## todo2
-
-- [x] add: git
-- [x] add: requirements.txt
-- [x] add: setup.py
-- [ ] add: logger
-- [ ] add: listDevice
-- [x] add: `adb devices` 
-- [x] `adb shell`
-- [x] `series ssh shell` 切换成adb模式
-` python -c "from rknn.api import RKNN;print(RKNN().list_devices())" `
-- [ ] bug: `RKNN().list_devices()` 无法发现rknn
-- [ ] 
-- [x] add: zalai::stdout
-- [ ] rm : tmp.t
-`from rknn.api.rknn_base import RKNNBase;RKNNBase().list_devices()`
-
-
+## connection
+### zalaiConvert list
+#### adb/ntb
 `start_usb.sh  ntb`
+
 
 ```
 which start_usb.sh
 /usr/bin/start_usb.sh
+```
 
+```
 adb shell nohup start_usb.sh ntb
 [root@M1808 ~]# vi /usr/bin/start_usb.sh
 [root@M1808 ~]# ls /dev/usb-ffs/
 ```
 
 
+### zalaiConvert killserver
+#### NTB protocl
+NTB(Non-Transparent Bridge)
 
-## arch
-
-进程调用=》flask服务器=》json协议
-process call => flask => return json 
-
-## misc
-### NTB protocl
-Non-Transparent Bridge 
 `zal_rk130\Lib\site-packages\rknn\3rdparty\platform-tools\ntp\windows-x86_64\npu_transfer_proxy.exe`
 
 `taskkill /im npu_transfer_proxy.exe /f`
+
+
+## base
+### env snippet
+``` bat
+@set PY=E:\ProgramData\Anaconda3\envs\zal_rk140
+@set PATH=%PATH%;%PY%\Library\bin;%PY%\Library/bin;%PY%\Lib\site-packages\~knn\api\lib\hardware\Windows_x64;%PY%\Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64;
+
+python -m rknn.bin.visualization
+```
