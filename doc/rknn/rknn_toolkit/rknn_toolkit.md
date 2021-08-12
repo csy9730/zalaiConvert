@@ -112,3 +112,10 @@ E ValueError: snapshot must call after quantize build when the original model is
 ```
 
 ### 用时分析
+
+## misc
+
+模拟器是完美实现，代价是运行速度极慢，随便跑个模型都要20多秒。
+设备运行就不同了，运行速度极快，但是结果可能和模拟器一致，也可能和模拟器结果完全不同。
+
+rockchip每次更新驱动/运行时版本，就是使模拟器和设备结果一致。

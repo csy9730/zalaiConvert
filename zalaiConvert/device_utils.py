@@ -6,21 +6,19 @@ import time
 import argparse
 import json
 
-
-from zalaiConvert.utils.common import dumpsStatusDec, TrainProc, dumpsDict
-
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), ".."))
+from zalaiConvert.utils.common import dumpsStatusDec, TrainProc, dumpsDict
 from zalaiConvert.utils.constant import NtbDevice, NtbDeviceInfo
 
 
 if os.name == "nt":
     PY = os.path.dirname(os.path.abspath(sys.executable))
-    os.environ['path'] = ";".join([
+    os.environ['PATH'] = ";".join([
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin"),
         os.path.join(PY, r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64"),
         os.path.join(PY, r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64"),
         os.path.join(PY, r"Library/bin"),
-        os.environ.get('path')
+        os.environ.get('PATH')
     ])
 
 def checkRknnDevice(args):

@@ -5,13 +5,7 @@ import numpy as np
 import cv2
 from rknn.api import RKNN
 
-# import torch
 
-GRID0 = 13
-GRID1 = 26
-GRID2 = 52
-
-SPAN = 3
 MAX_BOXES = 500
 OBJ_THRESH = 0.5
 NMS_THRESH = 0.5
@@ -36,6 +30,16 @@ def activateEnv(pth=None):
     os.environ['PATH'] = ';'.join(lst)
 
 activateEnv()
+
+def loadClassname(name_file):
+    name_list = []
+    with open(name_file, 'r') as F:
+        content = F.readlines()
+        for i in range(len(content)):
+            c = content[i].rstrip('\r').rstrip('\n')
+            if c:
+                name_list.append(c)
+    return name_list
 
 
 def parse_model_cfg(path):
@@ -415,46 +419,69 @@ def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=No
 
     return rknn
 
-def rknnPredict(inputs, rknn):
-    outputs = rknn.inference(inputs=inputs)
-    return outputs
+class RknnPredictor(object):
+    def __init__(self, rknn):
+        self.rknn = rknn
+        self.anchors = None
+        self.NUM_CLS = 2
+        self.width, self.height = 416, 416
+
+        self.GRID0 = 13
+        self.GRID1 = 26
+        self.GRID2 = 52
+        self.SPAN = 3
+
+    def loadCfg(self, cfg_path=None):
+        if cfg_path:
+            pmc = parse_model_cfg(cfg_path)
+            yolos = [s for s in pmc if s['type']=='yolo']
+            self.NUM_CLS = yolos[0]["classes"]
+            self.anchors = yolos[0]["anchors"]
+
+        self.LISTSIZE = self.NUM_CLS + 5
 
 
-def preprocess(img, with_normalize=None, hwc_chw=None, **kwargs):
-    # print(img.shape)
-    # height, width = img.shape[:2]
-    # raw_img = img
-    WH = (416, 416)
-    if img.shape[0:2] != WH:
-        img = cv2.resize(img, WH)
-    # img = imagePadding(img, (256,256))[0]
-    input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    def preprocess(self, img, with_normalize=None, hwc_chw=None, **kwargs):
+        WH = (self.width, self.height)
+        if img.shape[0:2] != WH:
+            img = cv2.resize(img, WH)
+        # img = imagePadding(img, (256,256))[0]
+        input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        input_image = input_image.astype(np.float32)
+        if hwc_chw:
+            input_image = input_image.transpose([2, 0, 1])
 
-    input_image = input_image.astype(np.float32)
+        return input_image
 
-    if not with_normalize:
-        mean = np.array([0, 0, 0], dtype=np.float32)
-        std = np.array([255, 255, 255], dtype=np.float32)
+
+    def postProcess(cls, preds):
+        input_data = [
+            np.transpose(preds[0].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID0, cls.GRID0), (2, 3, 0, 1)),
+            np.transpose(preds[1].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID1, cls.GRID1), (2, 3, 0, 1)),
+            np.transpose(preds[2].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID2, cls.GRID2), (2, 3, 0, 1))
+        ]
+        boxes, classes, scores = yolov3_post_process(input_data, cls.anchors)
+        return boxes, classes, scores
+
+    def farward(self, x):
+        outputs = self.rknn.inference(inputs=x)
+        return outputs
         
-        input_image = (input_image/1 - mean) / std
+    def predict(self, img, args):
+        img2 = self.preprocess(img)
+        pred = self.farward([img2])
+        preds = self.postProcess(pred)
+        return preds
 
-    if hwc_chw:
-        input_image = input_image.transpose([2, 0, 1])
-
-    return input_image
-
-
-COLOR_LIST = [[0,0,0],[0,0,128], [0,128,0], [128,0,0], [255,128,0], [128,0,255], [0, 255,128]]
-# COLOR_LIST = np.array(COLOR_LIST)
 
 def drawImagePoints(img, pred):
     for p in pred:
-        cv2.circle(img, p, 3, (0,0,255))
+        cv2.circle(img, p, 3, (0, 0, 255))
 
 
 def draw_predict(img, preds):
     for i in range(0, 68):
-        cv2.circle(img, (int(preds[i][0]), int(preds[i][1])), 2, (0,255,0), -1)
+        cv2.circle(img, (int(preds[i][0]), int(preds[i][1])), 2, (0, 255, 0), -1)
 
 
 def showImage(img, text="untitled"):
@@ -471,22 +498,27 @@ def parse_args(cmds=None):
     parser.add_argument('--input', '-i', help='image file path')
     parser.add_argument('--output', '-o', help='save output image name')
     parser.add_argument('--config')
+    parser.add_argument('--name-file')
 
     parser.add_argument('--network', '--network-cfg', '-nw')
+
     parser.add_argument('--use-padding', action='store_true', help='model file path')
-    parser.add_argument('--save-img', action='store_true', help='model file path')
-    parser.add_argument('--show-img', action='store_true', help='model file path')
     parser.add_argument('--input-chw', action='store_true', help='model file path')
-    parser.add_argument('--device', help='device: rk1808, rk1126')
-    parser.add_argument('--device-id')
-    parser.add_argument('--task', choices=['segment', 'detect', 'classify', 'keypoint'], default='keypoint', help='device: rk1808, rk1126')
-    parser.add_argument('--mix-scale', type=float, help='segment task params: mix scale')
-    parser.add_argument('--verbose', action='store_true', help='verbose information')
     parser.add_argument('--with-normalize', action='store_true', help='rknn with normalize')
     parser.add_argument('--hwc-chw', action='store_true', help='image preprocess: from HWC to CHW')
-    parser.add_argument('--run-perf', action='store_true', help='eval perf')
 
+    parser.add_argument('--device', help='device: rk1808, rk1126')
+    parser.add_argument('--device-id')
+
+    parser.add_argument('--task', choices=['segment', 'detect', 'classify', 'keypoint'], default='keypoint', help='device: rk1808, rk1126')
+    parser.add_argument('--mix-scale', type=float, help='segment task params: mix scale')
+    parser.add_argument('--run-perf', action='store_true', help='eval perf')
+    
+    parser.add_argument('--verbose', action='store_true', help='verbose information')
     parser.add_argument('--save-npy', action='store_true')
+    parser.add_argument('--save-img', action='store_true', help='model file path')
+    parser.add_argument('--show-img', action='store_true', help='model file path')
+
     parser.add_argument('--use-transfer', '-t', action='store_true')
     parser.add_argument('--dataset', '-ds')
     parser.add_argument('--weight', '-w')
@@ -498,18 +530,14 @@ def predictWrap(source, model_path, cfg=None, args=None):
     rknn = getRknn(model_path, device=args.device, device_id=args.device_id)
     if rknn is None:
         exit(-1)
+    rk = RknnPredictor(rknn)
 
-    if cfg:
-        pmc = parse_model_cfg(cfg)
-        yolos = [s for s in pmc if s['type']=='yolo']
-        NUM_CLS = yolos[0]["classes"]
-        anchors = yolos[0]["anchors"]
+    rk.loadCfg(cfg)
+    if args.name_file:
+        class_list = loadClassname(args.name_file)
+        assert len(class_list) == rk.NUM_CLS
     else:
-        anchors = None
-        NUM_CLS = 2 # len(class_list)
-
-    class_list = tuple([str(i+1) for i in range(NUM_CLS)])
-    
+        class_list = tuple([str(i+1) for i in range(rk.NUM_CLS)])
 
     img_paths, video_id = guessSource(source)
     if img_paths:
@@ -525,38 +553,21 @@ def predictWrap(source, model_path, cfg=None, args=None):
         title = "camera"
 
     waitTime = 30 if use_camera else 0
-    W, H = 416, 416
-    LISTSIZE = NUM_CLS + 5
+    W, H = rk.width, rk.height
+
     for i, img in enumerate(imgs):
         if img.shape[0:2] != (W, H):
             img = cv2.resize(img, (W, H))
-
-        img2 = preprocess(img, with_normalize=args.with_normalize, hwc_chw=args.hwc_chw)
-        # print(img.shape)
+    
         t0 = time.time()
-        pred = rknnPredict([img2], rknn)
+        boxes, classes, scores = rk.predict(img, args)
         print("time: ", time.time() - t0)
-        # print("pred", pred, pred[0].shape)
-        # print("shape", pred[0].shape)
-
-        input_data = [
-            np.transpose(pred[0].reshape(SPAN, LISTSIZE, GRID0, GRID0), (2, 3, 0, 1)),
-            np.transpose(pred[1].reshape(SPAN, LISTSIZE, GRID1, GRID1), (2, 3, 0, 1)),
-            np.transpose(pred[2].reshape(SPAN, LISTSIZE, GRID2, GRID2), (2, 3, 0, 1))
-        ]
-
-        boxes, classes, scores = yolov3_post_process(input_data, anchors)
         if boxes is not None:
             draw(img, boxes, scores, classes, class_list)
-    
-        # preds = postProcess(pred[0])
-    
+
         # if args.save_npy:
         #     np.save('out_{0}.npy'.format(i=i), pred[0])
-        
-        # draw_predict(img, preds)
 
-        # print(preds, preds.shape)
         if args.save_img:
             cv2.imwrite(args.output.format(i=i), img.astype(np.uint8))
 

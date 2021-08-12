@@ -5,12 +5,8 @@ import cv2
 from PIL import Image
 from rknn.api import RKNN
 
-GRID0 = 13 # 13
-GRID1 = GRID0*2
-GRID2 = GRID0*4
-LISTSIZE = 8 # 85  8
-SPAN = 3
-NUM_CLS = 3 # 80  3
+
+
 MAX_BOXES = 500
 OBJ_THRESH = 0.6
 NMS_THRESH = 0.3
@@ -40,6 +36,17 @@ def activateEnv(pth=None):
     os.environ['PATH'] = ';'.join(lst)
 
 activateEnv()
+
+def loadClassname(name_file):
+    name_list = []
+    with open(name_file, 'r') as F:
+        content = F.readlines()
+        for i in range(len(content)):
+            c = content[i].rstrip('\r').rstrip('\n')
+            if c:
+                name_list.append(c)
+    return name_list
+
 
 def parse_model_cfg(path):
     with open(path, 'r') as f:
@@ -186,21 +193,22 @@ def nms_boxes(boxes, scores):
     return keep
 
 
-def yolov3_post_process(input_data,rknn_name):
+def yolov3_post_process(input_data, anchors=None):
     # # yolov3
     # masks = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
     # anchors = [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45],
     #             [59, 119], [116, 90], [156, 198], [373, 326]]
     # yolov3-tiny
-    if 'tiny' in rknn_name:
-        masks = [[3,4,5],[0,1,2]]
-        anchors = [[10,14], [23,27], [37,58], [81,82], [135,169], [344,319]]
-    # elif 'yolov4' in rknn_name:
+    if len(input_data) == 2:
+        masks = [[3,4,5], [0,1,2]]
+        if anchors is None:
+            anchors = [[10,14], [23,27], [37,58], [81,82], [135,169], [344,319]]
     else:
         masks = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
-        # anchors = [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]]
-        anchors = [[ 8, 13], [17, 32], [28, 51], [39, 74], [56, 93], [67, 140], [108, 146], [140, 229], [239, 286]]
-        # anchors = [[12, 16], [19, 36], [40, 28], [36, 75], [76, 55], [72, 146], [142, 110], [192, 243], [459, 401]]
+        if anchors is None:
+            # anchors = [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]]
+            anchors = [[ 8, 13], [17, 32], [28, 51], [39, 74], [56, 93], [67, 140], [108, 146], [140, 229], [239, 286]]
+            # anchors = [[12, 16], [19, 36], [40, 28], [36, 75], [76, 55], [72, 146], [142, 110], [192, 243], [459, 401]]
 
     boxes, classes, scores = [], [], []
     for input,mask in zip(input_data, masks):
@@ -342,7 +350,7 @@ def imagePadding(img, out_shape):
     # ratio = wanted_size[1] / tt_image.shape[0], wanted_size[0] / tt_image.shape[1]
     return rz_img, paddings
 
-def draw(image, boxes, scores, classes):
+def draw(image, boxes, scores, classes, class_list):
     """Draw the boxes on the image.
 
     # Argument:
@@ -354,7 +362,7 @@ def draw(image, boxes, scores, classes):
     """
     for box, score, cl in zip(boxes, scores, classes):
         x, y, w, h = box
-        print('\nclass: {}, score: {}'.format(CLASSES[cl], score))
+        print('\nclass: {}, score: {}'.format(class_list[cl], score))
         print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(x, y, x+w, y+h))
         x *= image.shape[1]
         y *= image.shape[0]
@@ -369,7 +377,7 @@ def draw(image, boxes, scores, classes):
         #   print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(top, left, right, bottom))
 
         cv2.rectangle(image, (top, left), (right, bottom), (255, 0, 0), 2)
-        cv2.putText(image, '{0} {1:.2f}'.format(CLASSES[cl], score),
+        cv2.putText(image, '{0} {1:.2f}'.format(class_list[cl], score),
                     (top, left - 6),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6, (0, 0, 255), 2)
@@ -414,21 +422,85 @@ def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=No
         return None
     print('Init runtime done')
     return rknn
-def rknnPredict(inputs, rknn):
-    outputs = rknn.inference(inputs=inputs)
-    return outputs
+
+class RknnPredictor(object):
+    def __init__(self, rknn):
+        self.rknn = rknn
+        self.anchors = None
+        self.NUM_CLS = 3 # 80  3
+        self.width, self.height = 416, 416  
+
+        self.GRID0 = 13 # 13
+        self.GRID1 = GRID0*2
+        self.GRID2 = GRID0*4
+        self.LISTSIZE = 8 # 85  8
+        self.SPAN = 3
+
+    def loadCfg(self, cfg_path=None):
+        if cfg_path:
+            pmc = parse_model_cfg(cfg_path)
+            yolos = [s for s in pmc if s['type']=='yolo']
+            self.NUM_CLS = yolos[0]["classes"]
+            self.anchors = yolos[0]["anchors"]
+
+        self.LISTSIZE = self.NUM_CLS + 5
+    @classmethod
+    def preprocess(cls, img, with_normalize=None, hwc_chw=None, **kwargs):
+        # print(img.shape)
+        WH = (416, 416)
+        if img.shape[0:2] != WH:
+            img = cv2.resize(img, WH)
+        # img = imagePadding(img, (256,256))[0]
+        input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        input_image = input_image.astype(np.float32)
+        if hwc_chw:
+            input_image = input_image.transpose([2, 0, 1])
+
+        return input_image
+
+    @classmethod
+    def postProcess(cls, preds):
+        if len(preds) == 3: # 'tiny' not in rknn_name
+            print("yolov4")
+            input_data = [        
+                np.transpose(preds[0].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID2, cls.GRID2), (2, 3, 0, 1)),
+                np.transpose(preds[1].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID1, cls.GRID1), (2, 3, 0, 1)),
+                np.transpose(preds[2].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID0, cls.GRID0), (2, 3, 0, 1))
+            ]
+        else:
+            print("yolov4_tiny")
+            input_data = [        
+                np.transpose(preds[0].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID1, cls.GRID1), (2, 3, 0, 1)),
+                np.transpose(preds[1].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID0, cls.GRID0), (2, 3, 0, 1))
+            ]
+        boxes, classes, scores = yolov3_post_process(input_data, cls.anchors)
+        return boxes, classes, scores
+
+    def farward(self, x):
+        outputs = self.rknn.inference(inputs=x)
+        return outputs
+        
+    def predict(self, img, args):
+        img2 = self.preprocess(img)
+        pred = self.farward([img2])
+        preds = self.postProcess(pred)
+        return preds
+    
 
 def parse_args(cmds=None):
     import argparse
     parser = argparse.ArgumentParser(description='Rknn predict & show key points')
     parser.add_argument('--input', '-i', help='image file path')
     parser.add_argument('--output', '-o', help='save output image name')
+    parser.add_argument('--network', '--network-cfg', '-nw')
     parser.add_argument('--model', '-m')
+
     parser.add_argument('--device')
     parser.add_argument('--device-id')
+
     parser.add_argument('--save-img', action='store_true', help='model file path')
     parser.add_argument('--show-img', action='store_true', help='model file path')
-    parser.add_argument('--network', '--network-cfg', '-nw')
+
 
     return parser.parse_args()
 
@@ -437,38 +509,26 @@ def predictWrap(imgPath, rknn_name, output, args):
     rknn = getRknn(rknn_name, device=args.device, device_id=args.device_id)
     if rknn is None:
         exit(-1)
+    rk = RknnPredictor(rknn)
+
+    rk.loadCfg(cfg)
+    if args.name_file:
+        class_list = loadClassname(args.name_file)
+        assert len(class_list) == rk.NUM_CLS
+    else:
+        class_list = tuple([str(i+1) for i in range(rk.NUM_CLS)])
 
     img = cv2.imread(imgPath)
     assert os.path.exists(imgPath)
 
     img = cv2.resize(img, (WIDTH, WIDTH))
-    mat = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    t0 = time.time()
+    boxes, classes, scores = rk.predict(img, args)
+    print("time: ", time.time() - t0)
 
-    preds = rknnPredict([mat], rknn)
-    # preds = rknn.inference(inputs=[mat])
-
-    print(preds[0].shape)
-
-    if 'tiny' not in rknn_name:
-        out_boxes, out_boxes2, out_boxes3 = preds
-        out_boxes = out_boxes.reshape(SPAN, LISTSIZE, GRID2, GRID2)
-        out_boxes2 = out_boxes2.reshape(SPAN, LISTSIZE, GRID1, GRID1)
-        out_boxes3 = out_boxes3.reshape(SPAN, LISTSIZE, GRID0, GRID0)
-    else:
-        out_boxes, out_boxes2 = preds
-        out_boxes = out_boxes.reshape(SPAN, LISTSIZE, GRID0, GRID0)
-        out_boxes2 = out_boxes2.reshape(SPAN, LISTSIZE, GRID1, GRID1)
-
-    input_data = []
-    input_data.append(np.transpose(out_boxes, (2, 3, 0, 1)))
-    input_data.append(np.transpose(out_boxes2, (2, 3, 0, 1)))
-    if 'tiny' not in rknn_name:
-        input_data.append(np.transpose(out_boxes3, (2, 3, 0, 1)))
-
-    boxes, classes, scores = yolov3_post_process(input_data, rknn_name)
-
+    print(boxes, classes, scores)
     if boxes is not None:
-        draw(img, boxes, scores, classes)
+        draw(img, boxes, scores, classes, class_list)
     cv2.imwrite(output, img)
     # cv2.imshow("results", img)
     # cv2.waitKey(0)

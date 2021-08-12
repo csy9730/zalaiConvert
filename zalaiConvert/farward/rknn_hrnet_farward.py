@@ -1,10 +1,10 @@
 import os
 import sys
+import time
 import numpy as np
 import cv2
 from rknn.api import RKNN
-import time
-# import torch
+
 
 
 def activateEnv(pth=None):
@@ -231,7 +231,7 @@ def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=No
     print('Load done')
 
     print('Init runtime environment')
-    ret = rknn.init_runtime(target=device, device_id=device_id, eval_mem=False, rknn2precompile=rknn2precompile) # 
+    ret = rknn.init_runtime(target=device, device_id=device_id, eval_mem=False, rknn2precompile=rknn2precompile)
     if ret != 0:
         print('Init runtime environment failed')
         return None
@@ -239,83 +239,51 @@ def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=No
 
     return rknn
 
-def rknnPredict(inputs, rknn):
-    outputs = rknn.inference(inputs=inputs)
-    return outputs
 
 
-def preprocess(img, with_normalize=None, hwc_chw=None, **kwargs):
-    # print(img.shape)
-    # height, width = img.shape[:2]
-    # raw_img = img
-    WH = (256, 256)
-    if img.shape[0:2] != WH:
-        img = cv2.resize(img, WH)
-    # img = imagePadding(img, (256,256))[0]
-    input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+class RknnPredictor(object):
+    def __init__(self, rknn):
+        self.rknn = rknn
 
-    input_image = input_image.astype(np.float32)
+        self.width, self.height = 256, 256
 
-    if not with_normalize:
-        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-        std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+    def preprocess(self, img, with_normalize=None, hwc_chw=None, **kwargs):
+        WH = (self.width, self.height)
+        if img.shape[0:2] != WH:
+            img = cv2.resize(img, WH)
+        # img = imagePadding(img, (256,256))[0]
+        input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        input_image = input_image.astype(np.float32)
+        if hwc_chw:
+            input_image = input_image.transpose([2, 0, 1])
+
+        return input_image
+
+    def postProcess(self, score_map):
+        import torch
+        # score_map = score_map.transpose([0, 2, 3, 1]) ### 
+        # print(score_map.shape)
+        score_map = torch.Tensor(score_map)
+        coords = get_argmax_pt(score_map)  # float type
+        scale = 256/200
+        center = torch.Tensor([127, 127])
+        preds = pts_unclip(coords[0], center, scale, [64, 64])
+        return preds
+
+    def farward(self, x):
+        outputs = self.rknn.inference(inputs=x)
+        return outputs
         
-        input_image = (input_image/255.0 - mean) / std
-
-    if hwc_chw:
-        input_image = input_image.transpose([2, 0, 1])
-
-    return input_image
-
-def postProcess(score_map):
-    import torch
-    # score_map = score_map.transpose([0, 2, 3, 1]) ### 
-    # print(score_map.shape)
-    score_map = torch.Tensor(score_map)
-    coords = get_argmax_pt(score_map)  # float type
-    scale = 256/200
-    center = torch.Tensor([127, 127])
-    preds = pts_unclip(coords[0], center, scale, [64, 64])
-    return preds
-
-
-COLOR_LIST = [[0,0,0],[0,0,128], [0,128,0], [128,0,0], [255,128,0], [128,0,255], [0, 255,128]]
-# COLOR_LIST = np.array(COLOR_LIST)
-
-def maskIndex2rgb(msk, color_map):
-    """mask Index to mask rgb.
-
-    Parameters
-    ----------
-    msk: numpy.ndarray, (W,H,3), numpy.uint8
-        Mask image.
-    color_map: [[int,int,int], ...]
-        color map (default: None).
-
-    Returns
-    -------
-    out: numpy.ndarray, (W,H,3), numpy.uint8
-       colormap.
-
-    """
-    
-    out = np.zeros((*msk.shape, 3))
-    N = len(color_map)
-    msk = np.reshape(msk, (*msk.shape, 1))
-    for i in range(N):
-        out += (msk == i) * color_map[i]
-    return out
-
-
-def mat2list(dat):
-    dat = dat.reshape((1, -1))
-    dat = dat.tolist()
-    return [s for ss in dat for s  in ss]
+    def predict(self, img, args):
+        img2 = self.preprocess(img)
+        pred = self.farward([img2])
+        preds = self.postProcess(pred[0])
+        return preds
 
 
 def drawImagePoints(img, pred):
     for p in pred:
-        cv2.circle(img, p, 3, (0,0,255))
+        cv2.circle(img, p, 3, (0, 0, 255))
 
 
 def draw_predict(img, preds):
@@ -336,21 +304,23 @@ def parse_args(cmds=None):
     parser.add_argument('model', help='model file path')
     parser.add_argument('--input', '-i', help='image file path')
     parser.add_argument('--output', '-o', help='save output image name')
+    parser.add_argument('--config')
+
     parser.add_argument('--use-padding', action='store_true', help='model file path')
-    parser.add_argument('--save-img', action='store_true', help='model file path')
-    parser.add_argument('--show-img', action='store_true', help='model file path')
     parser.add_argument('--input-chw', action='store_true', help='model file path')
+    parser.add_argument('--with-normalize', action='store_true', help='rknn with normalize')
+    parser.add_argument('--hwc-chw', action='store_true', help='image preprocess: from HWC to CHW')
+
     parser.add_argument('--device', help='device: rk1808, rk1126')
     parser.add_argument('--device-id')
     parser.add_argument('--task', choices=['segment', 'detect', 'classify', 'keypoint'], default='keypoint', help='device: rk1808, rk1126')
-    parser.add_argument('--mix-scale', type=float, help='segment task params: mix scale')
-    parser.add_argument('--verbose', action='store_true', help='verbose information')
-    parser.add_argument('--with-normalize', action='store_true', help='rknn with normalize')
-    parser.add_argument('--hwc-chw', action='store_true', help='image preprocess: from HWC to CHW')
     parser.add_argument('--run-perf', action='store_true', help='eval perf')
 
+    parser.add_argument('--verbose', action='store_true', help='verbose information')
     parser.add_argument('--save-npy', action='store_true')
-    
+    parser.add_argument('--save-img', action='store_true', help='model file path')
+    parser.add_argument('--show-img', action='store_true', help='model file path')
+    parser.add_argument('--mix-scale', type=float, help='segment task params: mix scale')
     return parser.parse_args(cmds)
 
 
@@ -358,7 +328,8 @@ def predictWrap(source, model_path, args):
     rknn = getRknn(model_path, device=args.device, device_id=args.device_id)
     if rknn is None:
         exit(-1)
-        
+    rk = RknnPredictor(rknn)
+    
     img_paths, video_id = guessSource(source)
     if img_paths:
         imgs = genImgs(img_paths)
@@ -373,19 +344,16 @@ def predictWrap(source, model_path, args):
         title = "camera"
 
     waitTime = 30 if use_camera else 0
-    W, H = 256, 256   
+    W, H = rk.width, rk.height 
     for i, img in enumerate(imgs):
         if img.shape[0:2] != (W, H):
             img = cv2.resize(img, (W, H))
 
-        img2 = preprocess(img, with_normalize=args.with_normalize, hwc_chw=args.hwc_chw)
+        
         # print(img.shape)
         t0 = time.time()
-        pred = rknnPredict([img2], rknn)
+        preds = rk.predict(img, args)
         print("time: ", time.time() - t0)
-        # print("pred", pred, pred[0].shape)
-        # print("shape", pred[0].shape)
-        preds = postProcess(pred[0])
     
         if args.save_npy:
             np.save('out_{0}.npy'.format(i=i), pred[0])
