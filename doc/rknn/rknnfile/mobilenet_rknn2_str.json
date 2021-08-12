@@ -1,0 +1,98 @@
+{
+    "connection": [
+        {
+            "left": "input",
+            "left_tensor_id": 0,
+            "node_id": 0,
+            "right_tensor": {
+                "tensor_id": 0,
+                "type": "norm_tensor"
+            }
+        },
+        {
+            "left": "output",
+            "left_tensor_id": 0,
+            "node_id": 0,
+            "right_tensor": {
+                "tensor_id": 1,
+                "type": "norm_tensor"
+            }
+        }
+    ],
+    "const_tensor": [],
+    "graph": [
+        {
+            "left": "input",
+            "left_tensor_id": 0,
+            "right": "norm_tensor",
+            "right_tensor_id": 0
+        },
+        {
+            "left": "output",
+            "left_tensor_id": 0,
+            "right": "norm_tensor",
+            "right_tensor_id": 1
+        }
+    ],
+    "input_num": 1,
+    "name": "rknn model",
+    "network_platform": "Caffe",
+    "node_num": 1,
+    "nodes": [
+        {
+            "input_num": 1,
+            "lid": "npu_network_bin_graph",
+            "name": "nnbg",
+            "nn": {
+                "nbg": {
+                    "type": "RKNN_OP_NNBG"
+                }
+            },
+            "op": "RKNN_OP_NNBG",
+            "output_num": 1,
+            "uid": 0
+        }
+    ],
+    "norm_tensor": [
+        {
+            "dim_num": 4,
+            "dtype": {
+                "qnt_method": "layer",
+                "qnt_type": "int8",
+                "vx_type": "int8"
+            },
+            "size": [
+                1,
+                3,
+                224,
+                224
+            ],
+            "tensor_id": 0,
+            "url": "data"
+        },
+        {
+            "dim_num": 4,
+            "dtype": {
+                "qnt_method": "",
+                "qnt_type": "",
+                "vx_type": ""
+            },
+            "size": [
+                1,
+                1000,
+                1,
+                1
+            ],
+            "tensor_id": 1,
+            "url": "prob"
+        }
+    ],
+    "norm_tensor_num": 2,
+    "ori_network_platform": "Caffe",
+    "output_num": 1,
+    "target_platform": [
+        "rk3566"
+    ],
+    "version": "1.0.0",
+    "virtual_tensor": []
+}

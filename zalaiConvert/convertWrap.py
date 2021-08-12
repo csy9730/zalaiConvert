@@ -5,8 +5,8 @@ import time
 import argparse
 import json
 
-from zalai.common.stdout_status import fStdoutDict, fStdoutStatusDecorator
-from zalai.common.constant import TrainProc
+
+from zalaiConvert.utils.common import dumpsStatusDec, TrainProc, dumpsDict
 
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), ".."))
 # 环境变量添加adb, rknn_api.dll
@@ -15,7 +15,7 @@ from zalaiConvert.utils.cli import CliRuner, namespaceMergeDict
 
 
 class CliExporter(CliRuner):
-    @fStdoutStatusDecorator(TrainProc.ON_ARGPARSE_START, TrainProc.ON_ARGPARSE_END)
+    @dumpsStatusDec(TrainProc.ON_ARGPARSE_START, TrainProc.ON_ARGPARSE_END)
     def parse_args(self, cmd=None):   
         parser = argparse.ArgumentParser(description='rknn convert api.')
 

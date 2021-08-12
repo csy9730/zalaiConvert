@@ -118,7 +118,7 @@ class CliTrainer(CliRuner):
         return cfg
 
     def prepare(self, cfg):
-        from zalai.common.logger import setLogger
+        from zalaiConvert.utils.common import setLogger
         cfg.logger = setLogger(__name__, cfg.log_level, cfg.log_disable, cfg.log_file)
         if cfg.resume and (not cfg.model_in):
             cfg.model_in = cfg.output
@@ -169,5 +169,5 @@ class CliPredictor(CliRuner):
         return cfg
 
     def prepare(self, cfg):
-        from zalai.common.logger import setLogger
+        from zalaiConvert.utils.common import setLogger
         cfg.logger = setLogger(__name__, cfg.log_level, cfg.log_disable, cfg.log_file)
