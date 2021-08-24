@@ -24,11 +24,16 @@ def parse_args(cmds=None):
     parser.add_argument('--output', '-o', default='out.rknn', help='save output image name')
     parser.add_argument('--config', '-c')
 
+    parser.add_argument('--input-size-list', type=int, nargs='*', action='append', 
+        help='pytorch & tensorflow use this input shape')
+
+    parser.add_argument('--target-platform', nargs="*", choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
     parser.add_argument('--device', choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
     parser.add_argument('--do-quantization', action='store_true', help='model file path')
     parser.add_argument('--pre-compile', action='store_true', help='model file path')
 
-    parser.add_argument('--framework', help='model framework')
+    parser.add_argument('--framework', choices=['tflite', 'tensorflow', 'onnx', 'torchscript', 'pytorch', 'darknet', 'mxnet', 'caffee'], 
+        help='model framework')
     parser.add_argument('--darknet-cfg')
 
     parser.add_argument('--dataset', help='a txt file contain image paths')
@@ -53,41 +58,47 @@ def model2Rknn(model, output, dataset, framework='onnx', **kwargs):
         return onnxmodel2Rknn(model, output, dataset, framework='onnx', **kwargs)
     elif framework == 'darknet':
         return onnxmodel2Rknn(model, output, dataset, framework='darknet', **kwargs)
-    elif framework == 'pytorch':
+    elif framework in ['pytorch', 'torchscript']:
         return onnxmodel2Rknn(model, output, dataset, framework='pytorch', **kwargs)
     elif framework == 'tensorflow':
         return onnxmodel2Rknn(model, output, dataset, framework='tensorflow', **kwargs)
     elif framework in ['caffee', 'tflite', 'mxnet']:
         return onnxmodel2Rknn(model, output, dataset, framework=framework, **kwargs)
+    else:
+        print("%s not found" % framework)
 
 
 def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=False, \
     verbose=None, normalize_params=None, device=None, epochs=-1, 
-    log_file=None, framework='onnx', quantized_algorithm='normal',
+    log_file=None, framework='onnx', quantized_algorithm='normal', target_platform=None,
     **kwargs):
     if normalize_params is None:
         normalize_params = ['0', '0', '0', '1']
+    
+    image_channel = 3
+    image_size = 256
     # Create RKNN object
     rknn = RKNN(verbose=verbose, verbose_file=log_file)
     
     # pre-process config
     print('--> config model')    
     rknn.config(channel_mean_value=' '.join(normalize_params), reorder_channel='0 1 2',\
-        epochs=epochs, quantized_algorithm=quantized_algorithm)    
-    # , target_platform=[target]
+        epochs=epochs, quantized_algorithm=quantized_algorithm, 
+        target_platform=target_platform)  
     print('done')
-
     # Load tensorflow model
     print('--> Loading model')
     if framework == "pytorch":
-        ret = rknn.load_pytorch(model=model,input_size_list=[[3, 512, 512]])
+        input_size_list = kwargs.get("input_size_list", [[image_channel, image_size, image_size]])
+        ret = rknn.load_pytorch(model=model, input_size_list=input_size_list)
     elif framework == "onnx":
         ret = rknn.load_onnx(model=model)
     elif framework == "tensorflow":
+        input_size_list = kwargs.get("input_size_list", [[image_size, image_size, image_channel]])
         rknn.load_tensorflow(tf_pb = model,
             inputs = input_node,
             outputs = output_node,
-            input_size_list=[[image_size, image_size, image_channel]])
+            input_size_list=input_size_list)
     elif framework == "tflite":
         ret = rknn.load_tflite(model=model)
     elif framework == "darknet":
@@ -137,8 +148,6 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
         print('--> Begin analysis model accuracy')
         perf_ana = rknn.accuracy_analysis(inputs=dataset, target=device)
         print(perf_ana)
-
-
 
     print('done')
     rknn.release()

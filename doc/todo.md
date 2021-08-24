@@ -33,3 +33,10 @@
 - [ ] rm : tmp.t
 `from rknn.api.rknn_base import RKNNBase;RKNNBase().list_devices()`
 
+
+## 20210814 
+- [x] add: onnx2rknn:: --input-size-list
+- [ ] add: flask + rknn, web api
+- [ ] merge: yolov3 yolov4
+- [ ] add: cameraViewer
+- [ ] 

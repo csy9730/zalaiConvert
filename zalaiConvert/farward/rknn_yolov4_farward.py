@@ -1,16 +1,16 @@
 import os
 import sys
+import time
 import numpy as np
 import cv2
 from PIL import Image
 from rknn.api import RKNN
-
+from zalaiConvert.farward.cameraViewer import CameraViewer
 
 
 MAX_BOXES = 500
 OBJ_THRESH = 0.6
 NMS_THRESH = 0.3
-WIDTH = GRID0 * 32
 
 
 CLASSES = ("helmet","person","hat")
@@ -79,7 +79,7 @@ def parse_model_cfg(path):
     supported = ['type', 'batch_normalize', 'filters', 'size', 'stride', 'pad', 'activation', 'layers', 'groups',
                  'from', 'mask', 'anchors', 'classes', 'num', 'jitter', 'ignore_thresh', 'truth_thresh', 'random',
                  'stride_x', 'stride_y', 'weights_type', 'weights_normalization', 'scale_x_y', 'beta_nms', 'nms_kind',
-                 'iou_loss', 'iou_normalizer', 'cls_normalizer', 'iou_thresh']
+                 'iou_loss', 'iou_normalizer', 'cls_normalizer', 'iou_thresh', 'max_delta']
 
     f = []  # fields
     for x in mdefs[1:]:
@@ -93,7 +93,7 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def process(input, mask, anchors, width=WIDTH):
+def process(input, mask, anchors, width=416):
     """
         mask: [int]
         anchors: [[int, int],]
@@ -193,7 +193,7 @@ def nms_boxes(boxes, scores):
     return keep
 
 
-def yolov3_post_process(input_data, anchors=None):
+def yolov3_post_process(input_data, anchors=None, img_size=416):
     # # yolov3
     # masks = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
     # anchors = [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45],
@@ -212,7 +212,7 @@ def yolov3_post_process(input_data, anchors=None):
 
     boxes, classes, scores = [], [], []
     for input,mask in zip(input_data, masks):
-        b, c, s = process(input, mask, anchors)
+        b, c, s = process(input, mask, anchors, img_size)
         b, c, s = filter_boxes(b, c, s)
         boxes.append(b)
         classes.append(c)
@@ -248,51 +248,6 @@ def yolov3_post_process(input_data, anchors=None):
     scores = np.concatenate(nscores)
 
     return boxes, classes, scores
-
-def guessSource(source=None):
-    import glob
-    from pathlib import Path
-    img_formats = ('bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo')  # acceptable image suffixes
-    
-    img_paths = []
-    video_id = None
-    if source:
-        p = str(Path(source).absolute())  # os-agnostic absolute path
-        if p.endswith('.txt') and os.path.isfile(p):
-            with open(sources, 'r') as f:
-                files = [x.strip() for x in f.read().strip().splitlines() if len(x.strip())]
-        elif '*' in p:
-            files = sorted(glob.glob(p, recursive=True))  # glob
-        elif os.path.isdir(p):
-            files = sorted(glob.glob(os.path.join(p, '*.*')))  # dir
-        elif os.path.isfile(p):
-            files = [p]  # files
-        else:
-            raise Exception(f'ERROR: {p} does not exist')
-
-        print("files", files)
-        img_paths = [x for x in files if x.split('.')[-1].lower() in img_formats]
-    else:
-        video_id = 0
-    return img_paths, video_id
-
-
-def generate_camera(cap):
-    while True:
-        ret, img = cap.read()
-        if not ret:
-            break
-        # print(img.shape)
-        yield img
-
-def genImgs(img_paths):
-    for i in img_paths:
-        img = cv2.imread(i, 1)
-        if img is None:
-            print(i, "not found")
-        else:
-            yield img
-
 
 def getImagePaddingKeepWhRatio(in_shape, out_shape):
     """
@@ -429,12 +384,15 @@ class RknnPredictor(object):
         self.anchors = None
         self.NUM_CLS = 3 # 80  3
         self.width, self.height = 416, 416  
-
+        
         self.GRID0 = 13 # 13
-        self.GRID1 = GRID0*2
-        self.GRID2 = GRID0*4
-        self.LISTSIZE = 8 # 85  8
+        self.GRID1 = self.GRID0 * 2
+        self.GRID2 = self.GRID0 * 4
         self.SPAN = 3
+
+    @property
+    def LISTSIZE(self):
+        return self.NUM_CLS + 5
 
     def loadCfg(self, cfg_path=None):
         if cfg_path:
@@ -443,7 +401,7 @@ class RknnPredictor(object):
             self.NUM_CLS = yolos[0]["classes"]
             self.anchors = yolos[0]["anchors"]
 
-        self.LISTSIZE = self.NUM_CLS + 5
+        # self.LISTSIZE = self.NUM_CLS + 5
     @classmethod
     def preprocess(cls, img, with_normalize=None, hwc_chw=None, **kwargs):
         # print(img.shape)
@@ -458,7 +416,6 @@ class RknnPredictor(object):
 
         return input_image
 
-    @classmethod
     def postProcess(cls, preds):
         if len(preds) == 3: # 'tiny' not in rknn_name
             print("yolov4")
@@ -473,7 +430,7 @@ class RknnPredictor(object):
                 np.transpose(preds[0].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID1, cls.GRID1), (2, 3, 0, 1)),
                 np.transpose(preds[1].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID0, cls.GRID0), (2, 3, 0, 1))
             ]
-        boxes, classes, scores = yolov3_post_process(input_data, cls.anchors)
+        boxes, classes, scores = yolov3_post_process(input_data, cls.anchors, cls.width)
         return boxes, classes, scores
 
     def farward(self, x):
@@ -486,59 +443,68 @@ class RknnPredictor(object):
         preds = self.postProcess(pred)
         return preds
     
+    def __del__(self):
+        self.rknn.release()
 
 def parse_args(cmds=None):
     import argparse
     parser = argparse.ArgumentParser(description='Rknn predict & show key points')
+    parser.add_argument('--model', '-m')
     parser.add_argument('--input', '-i', help='image file path')
     parser.add_argument('--output', '-o', help='save output image name')
+    parser.add_argument('--config')
     parser.add_argument('--network', '--network-cfg', '-nw')
-    parser.add_argument('--model', '-m')
+    parser.add_argument('--name-file')
 
-    parser.add_argument('--device')
+    parser.add_argument('--device', choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
     parser.add_argument('--device-id')
 
-    parser.add_argument('--save-img', action='store_true', help='model file path')
-    parser.add_argument('--show-img', action='store_true', help='model file path')
-
+    parser.add_argument('--save-img', action='store_true', help='save image')
+    parser.add_argument('--show-img', action='store_true', help='show image')
 
     return parser.parse_args()
 
 
-def predictWrap(imgPath, rknn_name, output, args):
-    rknn = getRknn(rknn_name, device=args.device, device_id=args.device_id)
-    if rknn is None:
-        exit(-1)
-    rk = RknnPredictor(rknn)
+def predictWrap(source, model, output, args):
+    cmv = CameraViewer(source)
+    imgs = cmv.stream()
+    W, H = model.width, model.height
+    for i, img in enumerate(imgs):
+        if img.shape[0:2] != (W, H):
+            img = cv2.resize(img, (W, H))
 
-    rk.loadCfg(cfg)
-    if args.name_file:
-        class_list = loadClassname(args.name_file)
-        assert len(class_list) == rk.NUM_CLS
-    else:
-        class_list = tuple([str(i+1) for i in range(rk.NUM_CLS)])
+        t0 = time.time()
+        boxes, classes, scores = model.predict(img, args)
+        print("time: ", time.time() - t0)
 
-    img = cv2.imread(imgPath)
-    assert os.path.exists(imgPath)
-
-    img = cv2.resize(img, (WIDTH, WIDTH))
-    t0 = time.time()
-    boxes, classes, scores = rk.predict(img, args)
-    print("time: ", time.time() - t0)
-
-    print(boxes, classes, scores)
-    if boxes is not None:
-        draw(img, boxes, scores, classes, class_list)
-    cv2.imwrite(output, img)
-    # cv2.imshow("results", img)
-    # cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    rknn.release()
+        # print(boxes, classes, scores)
+        if boxes is not None:
+            draw(img, boxes, scores, classes, model.class_list)
+        cv2.imwrite(output, img)
+        if cmv.use_camera or args.show_img:
+            cv2.imshow(cmv.format(i=i), img)
+            k = cv2.waitKey(vmv.waitTime)
+            if k == 27:
+                break
+    print("predict finished")
 
 def main(cmds=None):
     args = parse_args(cmds)
 
-    predictWrap(args.input, args.model, args.output, args)
+    rknn = getRknn(args.model, device=args.device, device_id=args.device_id)
+    if rknn is None:
+        exit(-1)
+    model = RknnPredictor(rknn)
+
+    model.loadCfg(args.network)
+    if args.name_file:
+        class_list = loadClassname(args.name_file)
+        assert len(class_list) == model.NUM_CLS
+    else:
+        class_list = tuple([str(i+1) for i in range(model.NUM_CLS)])
+    model.class_list = class_list
+
+    predictWrap(args.input, model, args.output, args)
     print("__________________exit__________________")
 
 if __name__ == '__main__':

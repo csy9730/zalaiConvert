@@ -2,6 +2,7 @@
 
 ## connection
 ### zalaiConvert list
+
 #### adb/ntb
 `start_usb.sh  ntb`
 
@@ -17,6 +18,14 @@ adb shell nohup start_usb.sh ntb
 [root@M1808 ~]# ls /dev/usb-ffs/
 ```
 
+```
+python -m rknn.bin.list_devices
+
+*************************
+all device(s) with ntb mode:
+4486dcfc35a505c0
+*************************
+```
 
 ### zalaiConvert killserver
 #### NTB protocl

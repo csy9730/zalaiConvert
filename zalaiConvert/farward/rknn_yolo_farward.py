@@ -4,6 +4,7 @@ import time
 import numpy as np
 import cv2
 from rknn.api import RKNN
+from zalaiConvert.farward.cameraViewer import CameraViewer
 
 
 MAX_BOXES = 500
@@ -246,50 +247,6 @@ def yolov3_post_process(input_data, anchors=None):
 
     return boxes, classes, scores
 
-def guessSource(source=None):
-    import glob
-    from pathlib import Path
-    img_formats = ('bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo')  # acceptable image suffixes
-    
-    img_paths = []
-    video_id = None
-    if source:
-        p = str(Path(source).absolute())  # os-agnostic absolute path
-        if p.endswith('.txt') and os.path.isfile(p):
-            with open(sources, 'r') as f:
-                files = [x.strip() for x in f.read().strip().splitlines() if len(x.strip())]
-        elif '*' in p:
-            files = sorted(glob.glob(p, recursive=True))  # glob
-        elif os.path.isdir(p):
-            files = sorted(glob.glob(os.path.join(p, '*.*')))  # dir
-        elif os.path.isfile(p):
-            files = [p]  # files
-        else:
-            raise Exception(f'ERROR: {p} does not exist')
-
-        print("files", files)
-        img_paths = [x for x in files if x.split('.')[-1].lower() in img_formats]
-    else:
-        video_id = 0
-    return img_paths, video_id
-
-
-def generate_camera(cap):
-    while True:
-        ret, img = cap.read()
-        if not ret:
-            break
-        # print(img.shape)
-        yield img
-
-def genImgs(img_paths):
-    for i in img_paths:
-        img = cv2.imread(i, 1)
-        if img is None:
-            print(i, "not found")
-        else:
-            yield img
-
 
 def getImagePaddingKeepWhRatio(in_shape, out_shape):
     """
@@ -453,7 +410,6 @@ class RknnPredictor(object):
 
         return input_image
 
-
     def postProcess(cls, preds):
         input_data = [
             np.transpose(preds[0].reshape(cls.SPAN, cls.LISTSIZE, cls.GRID0, cls.GRID0), (2, 3, 0, 1)),
@@ -473,6 +429,8 @@ class RknnPredictor(object):
         preds = self.postProcess(pred)
         return preds
 
+    def __del__(self):
+        self.rknn.release()
 
 def drawImagePoints(img, pred):
     for p in pred:
@@ -498,27 +456,29 @@ def parse_args(cmds=None):
     parser.add_argument('--input', '-i', help='image file path')
     parser.add_argument('--output', '-o', help='save output image name')
     parser.add_argument('--config')
-    parser.add_argument('--name-file')
+
 
     parser.add_argument('--network', '--network-cfg', '-nw')
+    parser.add_argument('--name-file')
 
     parser.add_argument('--use-padding', action='store_true', help='model file path')
     parser.add_argument('--input-chw', action='store_true', help='model file path')
     parser.add_argument('--with-normalize', action='store_true', help='rknn with normalize')
     parser.add_argument('--hwc-chw', action='store_true', help='image preprocess: from HWC to CHW')
 
-    parser.add_argument('--device', help='device: rk1808, rk1126')
+    # parser.add_argument('--target', choices=['rk1808', 'rv1126'], help='target device: rk1808, rk1126')
+    parser.add_argument('--device', choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
     parser.add_argument('--device-id')
 
     parser.add_argument('--task', choices=['segment', 'detect', 'classify', 'keypoint'], default='keypoint', help='device: rk1808, rk1126')
-    parser.add_argument('--mix-scale', type=float, help='segment task params: mix scale')
     parser.add_argument('--run-perf', action='store_true', help='eval perf')
     
     parser.add_argument('--verbose', action='store_true', help='verbose information')
     parser.add_argument('--save-npy', action='store_true')
-    parser.add_argument('--save-img', action='store_true', help='model file path')
-    parser.add_argument('--show-img', action='store_true', help='model file path')
-
+    parser.add_argument('--save-img', action='store_true', help='save image')
+    parser.add_argument('--show-img', action='store_true', help='show image')
+    parser.add_argument('--mix-scale', type=float, help='segment task params: mix scale')
+    
     parser.add_argument('--use-transfer', '-t', action='store_true')
     parser.add_argument('--dataset', '-ds')
     parser.add_argument('--weight', '-w')
@@ -526,44 +486,20 @@ def parse_args(cmds=None):
     return parser.parse_args(cmds)
 
 
-def predictWrap(source, model_path, cfg=None, args=None):
-    rknn = getRknn(model_path, device=args.device, device_id=args.device_id)
-    if rknn is None:
-        exit(-1)
-    rk = RknnPredictor(rknn)
-
-    rk.loadCfg(cfg)
-    if args.name_file:
-        class_list = loadClassname(args.name_file)
-        assert len(class_list) == rk.NUM_CLS
-    else:
-        class_list = tuple([str(i+1) for i in range(rk.NUM_CLS)])
-
-    img_paths, video_id = guessSource(source)
-    if img_paths:
-        imgs = genImgs(img_paths)
-        use_camera = False
-        print("use images")
-        title = "img_{i}"
-    else:
-        cap = cv2.VideoCapture(video_id)
-        imgs = generate_camera(cap)
-        use_camera = True
-        print("use camera")
-        title = "camera"
-
-    waitTime = 30 if use_camera else 0
-    W, H = rk.width, rk.height
+def predictWrap(source, model, args=None):    
+    cmv = CameraViewer(source)
+    imgs = cmv.stream()
+    W, H = model.width, model.height
 
     for i, img in enumerate(imgs):
         if img.shape[0:2] != (W, H):
             img = cv2.resize(img, (W, H))
     
         t0 = time.time()
-        boxes, classes, scores = rk.predict(img, args)
+        boxes, classes, scores = model.predict(img, args)
         print("time: ", time.time() - t0)
         if boxes is not None:
-            draw(img, boxes, scores, classes, class_list)
+            draw(img, boxes, scores, classes, model.class_list)
 
         # if args.save_npy:
         #     np.save('out_{0}.npy'.format(i=i), pred[0])
@@ -571,30 +507,38 @@ def predictWrap(source, model_path, cfg=None, args=None):
         if args.save_img:
             cv2.imwrite(args.output.format(i=i), img.astype(np.uint8))
 
-        if args.show_img:
-            cv2.imshow(title.format(i=i), img)
-            k = cv2.waitKey(waitTime)
+        if cmv.use_camera or args.show_img:
+            cv2.imshow(cmv.format(i=i), img)
+            k = cv2.waitKey(vmv.waitTime)
             if k == 27:
                 break
 
-    if use_camera:
-        cap.release()
 
-    cv2.destroyAllWindows()
-    rknn.release()
+    print("predict finished")
 
 
 def main(cmds=None):
     args = parse_args(cmds)
-    model_path = args.model 
-    img_path = args.input
 
     if args.output:
         args.save_img = True
     elif args.output is None and args.save_img:
         args.output = 'out.jpg'
 
-    predictWrap(img_path, model_path, args.network, args)
+    rknn = getRknn(args.model , device=args.device, device_id=args.device_id)
+    if rknn is None:
+        exit(-1)
+    model = RknnPredictor(rknn)
+
+    model.loadCfg(args.network)
+    if args.name_file:
+        class_list = loadClassname(args.name_file)
+        assert len(class_list) == model.NUM_CLS
+    else:
+        class_list = tuple([str(i+1) for i in range(model.NUM_CLS)])
+    model.class_list = class_list
+
+    predictWrap(args.input, model, args)
     print("__________________exit__________________")
 
 if __name__ == "__main__":
