@@ -40,3 +40,8 @@
 - [ ] merge: yolov3 yolov4
 - [ ] add: cameraViewer
 - [ ] 
+
+
+```
+python -c "import sys;import os;os.environ['PATH'] = ';'.join([r'H:\project\mylib\py_misc_project', os.environ['PATH']]);os.system('cmd')"          
+```

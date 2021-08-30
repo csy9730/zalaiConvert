@@ -5,8 +5,10 @@ import numpy as np
 import cv2
 from PIL import Image
 from rknn.api import RKNN
-from zalaiConvert.farward.cameraViewer import CameraViewer
 
+from zalaiConvert.farward.cameraViewer import CameraViewer  
+from zalaiConvert.farward.farward_utils import activateEnv, loadClassname, parse_model_cfg, filter_boxes, nms_boxes
+from zalaiConvert.farward.farward_utils import getRknn
 
 MAX_BOXES = 500
 OBJ_THRESH = 0.6
@@ -16,78 +18,8 @@ NMS_THRESH = 0.3
 CLASSES = ("helmet","person","hat")
 
 
-def activateEnv(pth=None):
-    if pth is None:
-        pth = sys.executable
-    base = os.path.dirname(os.path.abspath(pth))
-    lst = [
-        os.path.join(base, r"Library\mingw-w64\bin"),
-        os.path.join(base, r"Library\usr\bin"),
-        os.path.join(base, r"Library\bin"),
-        os.path.join(base, r"Scripts"),
-        os.path.join(base, r"bin"),
-        os.path.join(base, r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64"),
-        os.path.join(base, r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64"),
-        os.path.join(base, r"Lib\site-packages\torch\lib"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../bin"),
-        base,
-        os.environ.get('PATH')
-    ]
-    os.environ['PATH'] = ';'.join(lst)
-
 activateEnv()
 
-def loadClassname(name_file):
-    name_list = []
-    with open(name_file, 'r') as F:
-        content = F.readlines()
-        for i in range(len(content)):
-            c = content[i].rstrip('\r').rstrip('\n')
-            if c:
-                name_list.append(c)
-    return name_list
-
-
-def parse_model_cfg(path):
-    with open(path, 'r') as f:
-        lines = f.read().split('\n')
-    lines = [x for x in lines if x and not x.startswith('#')]
-    lines = [x.rstrip().lstrip() for x in lines]  # get rid of fringe whitespaces
-    mdefs = []  # module definitions
-    for line in lines:
-        if line.startswith('['):  # This marks the start of a new block
-            mdefs.append({})
-            mdefs[-1]['type'] = line[1:-1].rstrip()
-            if mdefs[-1]['type'] == 'convolutional':
-                mdefs[-1]['batch_normalize'] = 0  # pre-populate with zeros (may be overwritten later)
-        else:
-            key, val = line.split("=")
-            key = key.rstrip()
-
-            if key == 'anchors':  # return nparray
-                mdefs[-1][key] = np.array([float(x) for x in val.split(',')]).reshape((-1, 2))  # np anchors
-            elif key in ['from', 'layers', 'mask']:  # return array
-                mdefs[-1][key] = [int(x) for x in val.split(',')]
-            else:
-                val = val.strip()
-                if val.isnumeric():  # return int or float
-                    mdefs[-1][key] = int(val) if (int(val) - float(val)) == 0 else float(val)
-                else:
-                    mdefs[-1][key] = val  # return string
-
-    # Check all fields are supported
-    supported = ['type', 'batch_normalize', 'filters', 'size', 'stride', 'pad', 'activation', 'layers', 'groups',
-                 'from', 'mask', 'anchors', 'classes', 'num', 'jitter', 'ignore_thresh', 'truth_thresh', 'random',
-                 'stride_x', 'stride_y', 'weights_type', 'weights_normalization', 'scale_x_y', 'beta_nms', 'nms_kind',
-                 'iou_loss', 'iou_normalizer', 'cls_normalizer', 'iou_thresh', 'max_delta']
-
-    f = []  # fields
-    for x in mdefs[1:]:
-        [f.append(k) for k in x if k not in f]
-    u = [x for x in f if x not in supported]  # unsupported fields
-    assert not any(u), "Unsupported fields %s in %s. See https://github.com/ultralytics/yolov3/issues/631" % (u, path)
-
-    return mdefs
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -129,69 +61,6 @@ def process(input, mask, anchors, width=416):
     box = np.concatenate((box_xy, box_wh), axis=-1)
 
     return box, box_confidence, box_class_probs
-
-def filter_boxes(boxes, box_confidences, box_class_probs):
-    """Filter boxes with object threshold.
-
-    # Arguments
-        boxes: ndarray, boxes of objects.
-        box_confidences: ndarray, confidences of objects.
-        box_class_probs: ndarray, class_probs of objects.
-
-    # Returns
-        boxes: ndarray, filtered boxes.
-        classes: ndarray, classes for boxes.
-        scores: ndarray, scores for boxes.
-    """
-    box_scores = box_confidences * box_class_probs
-    box_classes = np.argmax(box_scores, axis=-1)
-    box_class_scores = np.max(box_scores, axis=-1)
-    pos = np.where(box_class_scores >= OBJ_THRESH)
-
-    boxes = boxes[pos]
-    classes = box_classes[pos]
-    scores = box_class_scores[pos]
-
-    return boxes, classes, scores
-
-def nms_boxes(boxes, scores):
-    """Suppress non-maximal boxes.
-
-    # Arguments
-        boxes: ndarray, boxes of objects.
-        scores: ndarray, scores of objects.
-
-    # Returns
-        keep: ndarray, index of effective boxes.
-    """
-    x = boxes[:, 0]
-    y = boxes[:, 1]
-    w = boxes[:, 2]
-    h = boxes[:, 3]
-
-    areas = w * h
-    order = scores.argsort()[::-1]
-
-    keep = []
-    while order.size > 0:
-        i = order[0]
-        keep.append(i)
-
-        xx1 = np.maximum(x[i], x[order[1:]])
-        yy1 = np.maximum(y[i], y[order[1:]])
-        xx2 = np.minimum(x[i] + w[i], x[order[1:]] + w[order[1:]])
-        yy2 = np.minimum(y[i] + h[i], y[order[1:]] + h[order[1:]])
-
-        w1 = np.maximum(0.0, xx2 - xx1 + 0.00001)
-        h1 = np.maximum(0.0, yy2 - yy1 + 0.00001)
-        inter = w1 * h1
-
-        ovr = inter / (areas[i] + areas[order[1:]] - inter)
-        inds = np.where(ovr <= NMS_THRESH)[0]
-        order = order[inds + 1]
-    keep = np.array(keep)
-    return keep
-
 
 def yolov3_post_process(input_data, anchors=None, img_size=416):
     # # yolov3
@@ -249,63 +118,8 @@ def yolov3_post_process(input_data, anchors=None, img_size=416):
 
     return boxes, classes, scores
 
-def getImagePaddingKeepWhRatio(in_shape, out_shape):
-    """
-        1. 计算目标宽高比和自身宽高比,
-        2. 尽量使宽高比一致
-        3. 计算填充量
-        4. 宽高填充量必然有一个为0
-    """
-    wh_ratio = in_shape[0] / in_shape[1]
-    tg_wh_ratio = out_shape[0] / out_shape[1]
-    paddings = [0, 0]
-    if wh_ratio < tg_wh_ratio:
-        paddings[0] = int(in_shape[1] * (tg_wh_ratio - wh_ratio))
-    if wh_ratio >= tg_wh_ratio:
-        paddings[1] = int(in_shape[0] / tg_wh_ratio - in_shape[0] / wh_ratio)
-    return paddings
 
-def getImagePaddingKeepWhRatio2(in_shape, out_shape):
-    wh_ratio = in_shape[0] / in_shape[1]
-    tg_wh_ratio = out_shape[0] / out_shape[1]
-    
-    paddings = [0, 0]
-    if in_shape[0] * out_shape[1] < out_shape[0] *in_shape[1]:
-        paddings[0] = int(in_shape[1] * out_shape[0] / out_shape[1]) - in_shape[0]
-    else:
-        paddings[1] = int(in_shape[0] / out_shape[0] * out_shape[1]) - in_shape[1]
-    return paddings
-
-
-def imagePadding(img, out_shape):
-    """
-        图片，添加padding，执行resize。
-
-        img: np.ndarray
-        out_shape: tuple(int,int)
-
-        1.  计算目标宽高比和自身宽高比,计算填充量
-        2.  填充宽/高，
-        3.  通过resize放缩为目标尺寸
-    """
-    in_shape = img.shape
-    paddings = getImagePaddingKeepWhRatio(in_shape, out_shape)
-    pad2 = (paddings[0] //2, paddings[1] // 2)
-
-    if len(in_shape) == 2:
-        b_img = np.zeros((in_shape[0] + paddings[0],
-                          in_shape[1] + paddings[1])).astype(np.uint8)
-        b_img[pad2[0]: in_shape[0] + pad2[0], pad2[1]: in_shape[1] + pad2[1]] = img
-    else:
-        b_img = np.zeros((in_shape[0] + paddings[0], in_shape[1] + paddings[1],
-                          in_shape[2])).astype(np.uint8)
-        b_img[pad2[0]:in_shape[0] + pad2[0], pad2[1]: in_shape[1] + pad2[1], :] = img
-
-    rz_img = cv2.resize(b_img, out_shape[::-1])
-    # ratio = wanted_size[1] / tt_image.shape[0], wanted_size[0] / tt_image.shape[1]
-    return rz_img, paddings
-
-def draw(image, boxes, scores, classes, class_list):
+def draw_box(image, boxes, scores, classes, class_list):
     """Draw the boxes on the image.
 
     # Argument:
@@ -339,44 +153,7 @@ def draw(image, boxes, scores, classes, class_list):
 
         #   print('class: {0}, score: {1:.2f}'.format(CLASSES[cl], score))
         #   print('box coordinate x,y,w,h: {0}'.format(box))
-def rknn_query_model(model):
-    rknn = RKNN() 
-    mcfg = rknn.fetch_rknn_model_config(model)
-    print(mcfg["target_platform"], "version=", mcfg["version"])
-    print("pre_compile=", mcfg["pre_compile"])
 
-    return mcfg
-
-def get_io_shape(mcfg):
-    mt = mcfg["norm_tensor"]
-    mg = mcfg["graph"]
-
-    in_shape = []
-    out_shape = []
-    for i, g in enumerate(mg):
-        if g['left']=='output':
-            out_shape.append(mt[i]['size'])
-        else:
-            in_shape.append(mt[i]['size'])
-    return in_shape, out_shape
-
-def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=None, **kwargs):
-    rknn = RKNN(verbose=verbose)
-    assert os.path.exists(model)
-    print('--> Loading model')
-    ret = rknn.load_rknn(model)
-    if ret != 0:
-        print('load_rknn failed')
-        return None
-    print('Load done')
-
-    print('--> Init runtime environment')
-    ret = rknn.init_runtime(target=device, device_id=device_id)
-    if ret != 0:
-        print('Init runtime environment failed')
-        return None
-    print('Init runtime done')
-    return rknn
 
 class RknnPredictor(object):
     def __init__(self, rknn):
@@ -400,21 +177,26 @@ class RknnPredictor(object):
             yolos = [s for s in pmc if s['type']=='yolo']
             self.NUM_CLS = yolos[0]["classes"]
             self.anchors = yolos[0]["anchors"]
+            self._cfg_path = cfg_path
+    def loadGenClass(self, name_file=None):
+        if name_file:
+            class_list = loadClassname(name_file)
+            assert len(class_list) == self.NUM_CLS
+        else:
+            class_list = tuple([str(i+1) for i in range(model.NUM_CLS)])
+        self.class_list = class_list
 
-        # self.LISTSIZE = self.NUM_CLS + 5
-    @classmethod
-    def preprocess(cls, img, with_normalize=None, hwc_chw=None, **kwargs):
-        # print(img.shape)
-        WH = (416, 416)
-        if img.shape[0:2] != WH:
-            img = cv2.resize(img, WH)
+
+    def preprocess(self, img, with_normalize=None, hwc_chw=None, **kwargs):
+        if img.shape[0:2] != (self.height, self.width):
+            img = cv2.resize(img, (self.width, self.height))
         # img = imagePadding(img, (256,256))[0]
         input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         input_image = input_image.astype(np.float32)
         if hwc_chw:
             input_image = input_image.transpose([2, 0, 1])
 
-        return input_image
+        return [input_image]
 
     def postProcess(cls, preds):
         if len(preds) == 3: # 'tiny' not in rknn_name
@@ -438,13 +220,11 @@ class RknnPredictor(object):
         return outputs
         
     def predict(self, img, args):
-        img2 = self.preprocess(img)
-        pred = self.farward([img2])
+        input_tensor = self.preprocess(img)
+        pred = self.farward(input_tensor)
         preds = self.postProcess(pred)
         return preds
-    
-    def __del__(self):
-        self.rknn.release()
+
 
 def parse_args(cmds=None):
     import argparse
@@ -479,7 +259,7 @@ def predictWrap(source, model, output, args):
 
         # print(boxes, classes, scores)
         if boxes is not None:
-            draw(img, boxes, scores, classes, model.class_list)
+            draw_box(img, boxes, scores, classes, model.class_list)
         cv2.imwrite(output, img)
         if cmv.use_camera or args.show_img:
             cv2.imshow(cmv.format(i=i), img)
@@ -495,14 +275,9 @@ def main(cmds=None):
     if rknn is None:
         exit(-1)
     model = RknnPredictor(rknn)
-
+    model.loadGenClass(args.name_file)
     model.loadCfg(args.network)
-    if args.name_file:
-        class_list = loadClassname(args.name_file)
-        assert len(class_list) == model.NUM_CLS
-    else:
-        class_list = tuple([str(i+1) for i in range(model.NUM_CLS)])
-    model.class_list = class_list
+
 
     predictWrap(args.input, model, args.output, args)
     print("__________________exit__________________")

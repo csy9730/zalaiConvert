@@ -28,12 +28,16 @@ def main(cmd=None):
                 killserver            kill adb server & ntb server
                 startserver           start adb server & ntb server
                 convert               convert using a pretrained model
-
+                visualization         convert with visualization tool
+                activate
+                
+                zalaiConvert.convert.onnx2rknn
+                zalaiConvert.farward.rknn_yolo_farward
                 ''' % prog_name)
 
     parser.add_argument('command', help='Subcommand to run')
     args = parser.parse_args(cmd[0:1])
-    if args.command in ["list", "convert", "killserver", "startserver", "visualization"]:
+    if args.command in ["list", "convert", "killserver", "startserver", "visualization", "activate"]:
         if args.command == "list":
             from zalaiConvert.device_utils import main as devices
             devices(cmd[1:])
@@ -48,7 +52,10 @@ def main(cmd=None):
             startserver(cmd[1:])  
         elif args.command == "visualization":
             activateEnv()
-            os.system('python -m rknn.bin.visualization')            
+            os.system('python -m rknn.bin.visualization')  
+        elif args.command == "activate":
+            activateEnv()
+            os.system('cmd')          
     else:
         parser.print_help()
 

@@ -2,88 +2,15 @@ import os
 import sys
 import time
 import numpy as np
+import torch
 import cv2
 from rknn.api import RKNN
+
 from zalaiConvert.farward.cameraViewer import CameraViewer  
-
-
-def activateEnv(pth=None):
-    if pth is None:
-        pth = sys.executable
-    base = os.path.dirname(os.path.abspath(pth))
-    lst = [
-        os.path.join(base, r"Library\mingw-w64\bin"),
-        os.path.join(base, r"Library\usr\bin"),
-        os.path.join(base, r"Library\bin"),
-        os.path.join(base, r"Scripts"),
-        os.path.join(base, r"bin"),
-        os.path.join(base, r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64"),
-        os.path.join(base, r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64"),
-        os.path.join(base, r"Lib\site-packages\torch\lib"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../bin"),
-        base,
-        os.environ.get('PATH')
-    ]
-    os.environ['PATH'] = ';'.join(lst)
+from zalaiConvert.farward.farward_utils import activateEnv, timeit
+from zalaiConvert.farward.farward_utils import getRknn
 
 activateEnv()
-
-
-def getImagePaddingKeepWhRatio(in_shape, out_shape):
-    """
-        1. 计算目标宽高比和自身宽高比,
-        2. 尽量使宽高比一致
-        3. 计算填充量
-        4. 宽高填充量必然有一个为0
-    """
-    wh_ratio = in_shape[0] / in_shape[1]
-    tg_wh_ratio = out_shape[0] / out_shape[1]
-    paddings = [0, 0]
-    if wh_ratio < tg_wh_ratio:
-        paddings[0] = int(in_shape[1] * (tg_wh_ratio - wh_ratio))
-    if wh_ratio >= tg_wh_ratio:
-        paddings[1] = int(in_shape[0] / tg_wh_ratio - in_shape[0] / wh_ratio)
-    return paddings
-
-def getImagePaddingKeepWhRatio2(in_shape, out_shape):
-    wh_ratio = in_shape[0] / in_shape[1]
-    tg_wh_ratio = out_shape[0] / out_shape[1]
-    
-    paddings = [0, 0]
-    if in_shape[0] * out_shape[1] < out_shape[0] *in_shape[1]:
-        paddings[0] = int(in_shape[1] * out_shape[0] / out_shape[1]) - in_shape[0]
-    else:
-        paddings[1] = int(in_shape[0] / out_shape[0] * out_shape[1]) - in_shape[1]
-    return paddings
-
-
-def imagePadding(img, out_shape):
-    """
-        图片，添加padding，执行resize。
-
-        img: np.ndarray
-        out_shape: tuple(int,int)
-
-        1.  计算目标宽高比和自身宽高比,计算填充量
-        2.  填充宽/高，
-        3.  通过resize放缩为目标尺寸
-    """
-    in_shape = img.shape
-    paddings = getImagePaddingKeepWhRatio(in_shape, out_shape)
-    pad2 = (paddings[0] //2, paddings[1] // 2)
-
-    if len(in_shape) == 2:
-        b_img = np.zeros((in_shape[0] + paddings[0],
-                          in_shape[1] + paddings[1])).astype(np.uint8)
-        b_img[pad2[0]: in_shape[0] + pad2[0], pad2[1]: in_shape[1] + pad2[1]] = img
-    else:
-        b_img = np.zeros((in_shape[0] + paddings[0], in_shape[1] + paddings[1],
-                          in_shape[2])).astype(np.uint8)
-        b_img[pad2[0]:in_shape[0] + pad2[0], pad2[1]: in_shape[1] + pad2[1], :] = img
-
-    rz_img = cv2.resize(b_img, out_shape[::-1])
-    # ratio = wanted_size[1] / tt_image.shape[0], wanted_size[0] / tt_image.shape[1]
-    return rz_img, paddings
 
 
 def get_argmax_pt(scores):
@@ -155,99 +82,58 @@ def get_transform(center, scale, output_size, rot=0):
     return t
 
 
-def rknn_query_model(model):
-    rknn = RKNN() 
-    mcfg = rknn.fetch_rknn_model_config(model)
-    print(mcfg["target_platform"], "version=", mcfg["version"])
-    print("pre_compile=", mcfg["pre_compile"])
-
-    return mcfg
-
-def get_io_shape(mcfg):
-    mt = mcfg["norm_tensor"]
-    mg = mcfg["graph"]
-
-    in_shape = []
-    out_shape = []
-    for i, g in enumerate(mg):
-        if g['left']=='output':
-            out_shape.append(mt[i]['size'])
-        else:
-            in_shape.append(mt[i]['size'])
-    return in_shape, out_shape
-
-def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=None, **kwargs):
-    rknn = RKNN(verbose=verbose)  
-    assert os.path.exists(model)
-    print('--> Loading model')  
-    ret = rknn.load_rknn(model)
-    if ret != 0:
-        print('load_rknn failed')
-        return None
-    print('Load done')
-
-    print('--> Init runtime environment')
-    ret = rknn.init_runtime(target=device, device_id=device_id, eval_mem=False, rknn2precompile=rknn2precompile)
-    if ret != 0:
-        print('Init runtime environment failed')
-        return None
-    print('Init runtime done')
-
-    return rknn
-
-
 class RknnPredictor(object):
     def __init__(self, rknn):
         self.rknn = rknn
         self.width, self.height = 256, 256
 
     def preprocess(self, img, with_normalize=None, hwc_chw=None, **kwargs):
-        WH = (self.width, self.height)
-        if img.shape[0:2] != WH:
-            img = cv2.resize(img, WH)
+        if img.shape[0:2] != (self.height, self.width):
+            img = cv2.resize(img, (self.width, self.height))
         # img = imagePadding(img, (256,256))[0]
         input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         input_image = input_image.astype(np.float32)
         if hwc_chw:
             input_image = input_image.transpose([2, 0, 1])
 
-        return input_image
+        return [input_image]
 
     def postProcess(self, score_map):
-        import torch
-        # score_map = score_map.transpose([0, 2, 3, 1]) ### 
-        # print(score_map.shape)
-        score_map = torch.Tensor(score_map)
+        if not isinstance(score_map, torch.Tensor):
+            print("trans to tensor")
+            score_map = torch.Tensor(score_map)
+
         coords = get_argmax_pt(score_map)  # float type
         scale = 256/200
         center = torch.Tensor([127, 127])
-        preds = pts_unclip(coords[0], center, scale, [64, 64])
-        return preds
+        kpts = pts_unclip(coords[0], center, scale, [64, 64])
+        return kpts
 
     def farward(self, x):
         outputs = self.rknn.inference(inputs=x)
-        return outputs
-        
+        return outputs[0]
+
+    @timeit    
     def predict(self, img, args):
-        img2 = self.preprocess(img)
-        pred = self.farward([img2])
-        preds = self.postProcess(pred[0])
-        return preds
-    
-    def __del__(self):
-        self.rknn.release()
+        input_tensor = self.preprocess(img)
+        score_map = self.farward(input_tensor)
+        kpts = self.postProcess(score_map)
+        return kpts
+
+    def draw(self, img, preds):
+        return draw_pts(img, preds)
+
+    # def __del__(self):
+    #     self.rknn.release()
 
 
-def draw_predict(img, preds):
-    for i in range(0, 68):
-        cv2.circle(img, (int(preds[i][0]), int(preds[i][1])), 2, (0,255,0), -1)
-
-
-def showImage(img, text="untitled"):
-    cv2.imshow(text, img)
-    if cv2.waitKey(1) == ord('q'):  # q to quit
-        raise StopIteration
-    cv2.waitKey()
+def draw_pts(img, kpts):
+    img2 = img.copy()
+    for k in kpts:
+        x = int(k[0])
+        y = int(k[1])
+        cv2.circle(img2, (x, y), radius=2, thickness=-1, color=(0, 0, 255))
+    return img2
 
 
 def parse_args(cmds=None):
@@ -280,27 +166,23 @@ def parse_args(cmds=None):
 def predictWrap(source, model, args):
     cmv = CameraViewer(source)
     imgs = cmv.stream()
-    W, H = model.width, model.height
+    H, W = model.height, model.width
     for i, img in enumerate(imgs):
-        if img.shape[0:2] != (W, H):
+        if img.shape[0:2] != (H, W):
             img = cv2.resize(img, (W, H))
-        
-        # print(img.shape)
-        t0 = time.time()
-        preds = model.predict(img, args)
-        print("time: ", time.time() - t0)
-    
-        if args.save_npy:
-            np.save('out_{0}.npy'.format(i=i), pred[0])
-        
-        draw_predict(img, preds)
 
-        # print(preds, preds.shape)
+        kpts = model.predict(img, args)
+
+        if args.save_npy:
+            np.save('out_{0}.npy'.format(i=i), kpts)
+        
+        img2 = model.draw(img, kpts)
+
         if args.save_img:
-            cv2.imwrite(args.output.format(i=i), img.astype(np.uint8))
+            cv2.imwrite(args.output.format(i=i), img2.astype(np.uint8))
 
         if cmv.use_camera or args.show_img:
-            cv2.imshow(cmv.title.format(i=i), img)
+            cv2.imshow(cmv.title.format(i=i), img2)
             k = cv2.waitKey(cmv.waitTime)
             if k == 27:
                 break

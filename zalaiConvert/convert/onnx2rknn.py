@@ -25,7 +25,7 @@ def parse_args(cmds=None):
     parser.add_argument('--config', '-c')
 
     parser.add_argument('--input-size-list', type=int, nargs='*', action='append', 
-        help='pytorch & tensorflow use this input shape')
+        help='pytorch (C,H,W) & tensorflow (H,W,C) use this input shape')
 
     parser.add_argument('--target-platform', nargs="*", choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
     parser.add_argument('--device', choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
@@ -36,7 +36,7 @@ def parse_args(cmds=None):
         help='model framework')
     parser.add_argument('--darknet-cfg')
 
-    parser.add_argument('--dataset', help='a txt file contain image paths')
+    parser.add_argument('--dataset', default='1.txt', help='a txt file contain image paths')
 
     parser.add_argument('--verbose', action='store_true', help='verbose information')
     parser.add_argument('--rknn-logfile') # "rknn.log"
@@ -118,6 +118,8 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
 
     # Build model
     print('--> Building model')
+    if do_quantization:
+        assert os.path.exists(dataset)
     ret = rknn.build(do_quantization=do_quantization, dataset=dataset, pre_compile=pre_compile)
     if ret != 0:
         print('Build model failed!')
