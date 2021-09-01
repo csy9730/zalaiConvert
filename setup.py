@@ -29,7 +29,7 @@ setup(
     include_package_data=True,  # 将数据文件也打包
     package_data={
          'zalaiConvert.cfg': ['*.json'],
-         'zalaiConvert.bin': ['*.exe', '*.dll', '*.sh'],
+         'zalaiConvert.bin': ['*.exe', '*.dll', '*.sh', '*.bat'],
     },
 
     zip_safe=False,

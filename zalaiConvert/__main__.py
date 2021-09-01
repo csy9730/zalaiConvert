@@ -3,17 +3,8 @@ import os
 import argparse
 import os.path as osp
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), "../.."))
+from zalaiConvert.farward.farward_utils import activateEnv
 
-def activateEnv():
-    if os.name == "nt":
-        PY = os.path.dirname(os.path.abspath(sys.executable))
-        os.environ['PATH'] = ";".join([
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin"),
-            os.path.join(PY, r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64"),
-            os.path.join(PY, r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64"),
-            os.path.join(PY, r"Library/bin"),
-            os.environ.get('PATH')
-        ])
 
 def main(cmd=None):
     if cmd is None:
@@ -29,7 +20,7 @@ def main(cmd=None):
                 startserver           start adb server & ntb server
                 convert               convert using a pretrained model
                 visualization         convert with visualization tool
-                activate
+                activate              rknn_strings.sh
                 
                 zalaiConvert.convert.onnx2rknn
                 zalaiConvert.farward.rknn_yolo_farward

@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from functools import wraps
-
+import cv2
 import numpy as np
 from rknn.api import RKNN
 
@@ -10,19 +10,26 @@ def activateEnv(pth=None):
     if pth is None:
         pth = sys.executable
     base = os.path.dirname(os.path.abspath(pth))
-    lst = [
-        os.path.join(base, r"Library\mingw-w64\bin"),
-        os.path.join(base, r"Library\usr\bin"),
-        os.path.join(base, r"Library\bin"),
-        os.path.join(base, r"Scripts"),
-        os.path.join(base, r"bin"),
-        os.path.join(base, r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64"),
-        os.path.join(base, r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64"),
-        os.path.join(base, r"Lib\site-packages\torch\lib"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../bin"),
-        base,
-        os.environ.get('PATH')
-    ]
+    if os.name == "nt":
+        lst = [
+            os.path.join(base, r"Library\mingw-w64\bin"),
+            os.path.join(base, r"Library\usr\bin"),
+            os.path.join(base, r"Library\bin"),
+            os.path.join(base, r"Scripts"),
+            os.path.join(base, r"bin"),
+            os.path.join(base, r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64"),
+            os.path.join(base, r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64"),
+            os.path.join(base, r"Lib\site-packages\torch\lib"),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "../bin"),
+            base,
+            os.environ.get('PATH')
+        ]
+    else:
+        lst = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "../bin"),
+            base,
+            os.environ.get('PATH')
+        ]
     os.environ['PATH'] = ';'.join(lst)
 
 
@@ -93,28 +100,6 @@ def imagePadding(img, out_shape):
     rz_img = cv2.resize(b_img, out_shape[::-1])
     # ratio = wanted_size[1] / tt_image.shape[0], wanted_size[0] / tt_image.shape[1]
     return rz_img, paddings
-
-
-def rknn_query_model(model):
-    rknn = RKNN() 
-    mcfg = rknn.fetch_rknn_model_config(model)
-    print(mcfg["target_platform"], "version=", mcfg["version"])
-    print("pre_compile=", mcfg["pre_compile"])
-
-    return mcfg
-
-def get_io_shape(mcfg):
-    mt = mcfg["norm_tensor"]
-    mg = mcfg["graph"]
-
-    in_shape = []
-    out_shape = []
-    for i, g in enumerate(mg):
-        if g['left']=='output':
-            out_shape.append(mt[i]['size'])
-        else:
-            in_shape.append(mt[i]['size'])
-    return in_shape, out_shape
 
 
 def loadClassname(name_file):
@@ -233,9 +218,43 @@ def nms_boxes(boxes, scores, NMS_THRESH=0.5):
     return keep
 
 
+def draw_pts(img, kpts):
+    img2 = img.copy()
+    for k in kpts:
+        x = int(k[0])
+        y = int(k[1])
+        cv2.circle(img2, (x, y), radius=2, thickness=-1, color=(0, 0, 255))
+    return img2
+
+
+def rknn_query_model(model):
+    rknn = RKNN() 
+    mcfg = rknn.fetch_rknn_model_config(model)
+    if mcfg:
+        # print(mcfg["target_platform"], "version=", mcfg["version"])
+        print("pre_compile=", mcfg["pre_compile"])
+    return mcfg
+
+
+def get_io_shape(mcfg):
+    mt = mcfg["norm_tensor"]
+    mg = mcfg["graph"]
+
+    in_shape = []
+    out_shape = []
+    for i, g in enumerate(mg):
+        sz = mt[i]['size']
+        sz.reverse()
+        if g['left']=='output':
+            out_shape.append(sz)
+        else:
+            in_shape.append(sz)
+    return in_shape, out_shape
+
+
 def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=None, **kwargs):
     rknn = RKNN(verbose=verbose)  
-    assert os.path.exists(model)
+    assert os.path.isfile(model)
     print('--> Loading model')  
     ret = rknn.load_rknn(model)
     if ret != 0:
@@ -250,6 +269,7 @@ def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=No
         return None
     print('Init runtime done')
 
+    rknn.model_path = model
     return rknn
 
 
@@ -269,14 +289,7 @@ class RknnPredictor(object):
 
         return [input_image]
 
-    def postProcess(self, score_map):
-        if not isinstance(score_map, torch.Tensor):
-            print("trans to tensor")
-            score_map = torch.Tensor(score_map)
-        coords = get_argmax_pt(score_map)  # float type
-        scale = 256/200
-        center = torch.Tensor([127, 127])
-        kpts = pts_unclip(coords[0], center, scale, [64, 64])
+    def postProcess(self, kpts):
         return kpts
 
     def farward(self, x):
@@ -290,7 +303,44 @@ class RknnPredictor(object):
         kpts = self.postProcess(score_map)
         return kpts
 
-    def draw(self, img, preds):
-        return draw_pts(img, preds)
+    # def draw(self, img, preds):
+    #     return draw_pts(img, preds)
+
     # def __del__(self):
     #     self.rknn.release()
+
+def parse_args(cmds=None):
+    import argparse
+    parser = argparse.ArgumentParser(description='Rknn predict & show key points')
+    parser.add_argument('model', help='model file path')
+    parser.add_argument('--input', '-i', help='image file path')
+    parser.add_argument('--output', '-o', help='save output image name')
+    parser.add_argument('--config')
+
+
+    parser.add_argument('--network', '--network-cfg', '-nw')
+    parser.add_argument('--name-file', help='class name file')
+
+    parser.add_argument('--use-padding', action='store_true', help='model file path')
+    parser.add_argument('--input-chw', action='store_true', help='model file path')
+    parser.add_argument('--with-normalize', action='store_true', help='rknn with normalize')
+    parser.add_argument('--hwc-chw', action='store_true', help='image preprocess: from HWC to CHW')
+
+    # parser.add_argument('--target', choices=['rk1808', 'rv1126'], help='target device: rk1808, rk1126')
+    parser.add_argument('--device', choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
+    parser.add_argument('--device-id')
+
+    parser.add_argument('--task', choices=['segment', 'detect', 'classify', 'keypoint'], default='keypoint', help='device: rk1808, rk1126')
+    parser.add_argument('--run-perf', action='store_true', help='eval perf')
+    
+    parser.add_argument('--verbose', action='store_true', help='verbose information')
+    parser.add_argument('--save-npy', action='store_true')
+    parser.add_argument('--save-img', action='store_true', help='save image')
+    parser.add_argument('--show-img', action='store_true', help='show image')
+    parser.add_argument('--mix-scale', type=float, help='segment task params: mix scale')
+    
+    parser.add_argument('--use-transfer', '-t', action='store_true')
+    parser.add_argument('--dataset', '-ds')
+    parser.add_argument('--weight', '-w')
+    
+    return parser.parse_args(cmds)

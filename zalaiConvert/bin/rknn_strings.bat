@@ -1,1 +1,1 @@
-strings "%1"|findstr version
+@strings "%1"|findstr version

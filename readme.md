@@ -18,6 +18,13 @@ python -m zalaiConvert list
 ```
 
 ### convert network to rknn
+``` bash
+python -m zalaiConvert.convert.onnx2rknn yolov4_mirror_best.weights --darknet-cfg yolov4.cfg -o abc.rknn --framework darknet --dataset dataset.txt --normalize-params 0 0 0 255
 
+python -m zalaiConvert.convert.onnx2rknn yolov4_mirror_best.weights --darknet-cfg yolov4.cfg -o abc_q.rknn --framework darknet --dataset dataset.txt --normalize-params 0 0 0 255 --do-quantization
+```
 
-
+### rknn farward
+```
+python -m zalaiConvert.farward.rknn_yolo_farward abc_q.rknn -i test.jpg -o out_q.jpg --network yolov4.cfg --name-file class.txt --device rk1808
+```

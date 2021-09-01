@@ -7,8 +7,8 @@ import cv2
 from rknn.api import RKNN
 
 from zalaiConvert.farward.cameraViewer import CameraViewer  
-from zalaiConvert.farward.farward_utils import activateEnv, timeit
-from zalaiConvert.farward.farward_utils import getRknn
+from zalaiConvert.farward.farward_utils import activateEnv, timeit, draw_pts, parse_args
+from zalaiConvert.farward.farward_utils import getRknn, RknnPredictor
 
 activateEnv()
 
@@ -122,45 +122,6 @@ class RknnPredictor(object):
 
     def draw(self, img, preds):
         return draw_pts(img, preds)
-
-    # def __del__(self):
-    #     self.rknn.release()
-
-
-def draw_pts(img, kpts):
-    img2 = img.copy()
-    for k in kpts:
-        x = int(k[0])
-        y = int(k[1])
-        cv2.circle(img2, (x, y), radius=2, thickness=-1, color=(0, 0, 255))
-    return img2
-
-
-def parse_args(cmds=None):
-    import argparse
-    parser = argparse.ArgumentParser(description='Rknn predict & show key points')
-    parser.add_argument('model', help='model file path')
-    parser.add_argument('--input', '-i', help='image file path')
-    parser.add_argument('--output', '-o', help='save output image name')
-    parser.add_argument('--config')
-
-    parser.add_argument('--use-padding', action='store_true', help='model file path')
-    parser.add_argument('--input-chw', action='store_true', help='model file path')
-    parser.add_argument('--with-normalize', action='store_true', help='rknn with normalize')
-    parser.add_argument('--hwc-chw', action='store_true', help='image preprocess: from HWC to CHW')
-
-    # parser.add_argument('--target', choices=['rk1808', 'rv1126'], help='target device: rk1808, rk1126')
-    parser.add_argument('--device', choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
-    parser.add_argument('--device-id')
-    parser.add_argument('--task', choices=['segment', 'detect', 'classify', 'keypoint'], default='keypoint', help='device: rk1808, rk1126')
-    parser.add_argument('--run-perf', action='store_true', help='eval perf')
-
-    parser.add_argument('--verbose', action='store_true', help='verbose information')
-    parser.add_argument('--save-npy', action='store_true')
-    parser.add_argument('--save-img', action='store_true', help='save image')
-    parser.add_argument('--show-img', action='store_true', help='show image')
-    parser.add_argument('--mix-scale', type=float, help='segment task params: mix scale')
-    return parser.parse_args(cmds)
 
 
 def predictWrap(source, model, args):
