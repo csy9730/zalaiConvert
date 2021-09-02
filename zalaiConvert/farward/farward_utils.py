@@ -231,7 +231,8 @@ def rknn_query_model(model):
     rknn = RKNN() 
     mcfg = rknn.fetch_rknn_model_config(model)
     if mcfg:
-        # print(mcfg["target_platform"], "version=", mcfg["version"])
+        print(mcfg.get("target_platform"), "version=", mcfg["version"])
+        print(mcfg.get('ori_network_platform'))
         print("pre_compile=", mcfg["pre_compile"])
     return mcfg
 
@@ -259,6 +260,7 @@ def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=No
     ret = rknn.load_rknn(model)
     if ret != 0:
         print('load_rknn failed')
+        rknn.release()
         return None
     print('Load done')
 
@@ -266,6 +268,7 @@ def getRknn(model, device=None, rknn2precompile=None, verbose=None, device_id=No
     ret = rknn.init_runtime(target=device, device_id=device_id, eval_mem=False, rknn2precompile=rknn2precompile)
     if ret != 0:
         print('Init runtime environment failed')
+        rknn.release()
         return None
     print('Init runtime done')
 

@@ -126,11 +126,13 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
         return ret
     print('done')
 
+    print('--> Init runtime environment')
     if device:
         ret = rknn.init_runtime(target=device, eval_mem=False, rknn2precompile=pre_compile)
     if ret != 0:
         print('Init runtime environment failed')
         return ret
+    print('done')
 
     # Export rknn model
     print('--> Export RKNN model')
@@ -141,17 +143,21 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
     if ret != 0:
         print('Export mobilenet_v1.rknn failed!')
         return ret
+    print('done')
 
+    print('--> eval_memory RKNN model')
     if kwargs.get("use_evalmemory"):
         memory_detail = rknn.eval_memory()
         print(memory_detail)
+        print('done')
 
+    print('--> accuracy_analysis RKNN model')  
     if kwargs.get("use_accanalyze"):
         print('--> Begin analysis model accuracy')
         perf_ana = rknn.accuracy_analysis(inputs=dataset, target=device)
         print(perf_ana)
-
-    print('done')
+        print('done')
+    
     rknn.release()
     return 0
 

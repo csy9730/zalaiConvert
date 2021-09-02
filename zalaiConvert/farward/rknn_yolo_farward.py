@@ -186,13 +186,10 @@ class RknnPredictor(object):
         self.NUM_CLS = None
         self.masks = None
         self.width, self.height = 416, 416
-
         self.GRID = [13, 26, 52]
-
         self.SPAN = 3
         
         self._cfg_path = None
-
 
     def guess_cfg(self):
         self.mcfg = rknn_query_model(self.rknn.model_path)

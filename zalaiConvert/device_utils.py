@@ -47,7 +47,7 @@ def parse_adb(ret):
 
 def parseAdbStr(ss):
     import re
-    pat = re.compile(r'([0-9a-fA-F]{8,}|null)\s+(?:device|unauthorized)')
+    pat = re.compile(r'([0-9a-fA-F]{2,}|null)\s+(?:device|unauthorized)')
     fd = pat.findall(str(ss, encoding='utf-8'))
     return fd
 
@@ -66,11 +66,15 @@ def checkToNtb(args=None):
             return NtbDevice.ADB_ERROR_CODE
         # print(ret.stdout)
         devs = parseAdbStr(ret.stdout)
-        # print("devs", devs)
+        print("devs", devs)
         for dev in devs:
             if dev:
             # if b"0123456789ABCDEF" in ret.stdout:
-                ret = subprocess.run("adb shell nohup start_usb.sh ntb")  
+                if os.name == "nt":
+                    cmd = "adb shell nohup start_usb.sh ntb"
+                else:
+                    cmd = "adb shell nohup start_usb.sh adb"
+                ret = subprocess.run(cmd)  
                 if ret.returncode != 0:
                     return NtbDevice.NTB_SWITCH_ERRORR_CODE
                 time.sleep(5)

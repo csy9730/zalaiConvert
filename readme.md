@@ -1,6 +1,6 @@
 # readme
 
-zalaiConvert 是 基于RKNN_TOOLKIT的封装的应用脚本，工具集。
+zalaiConvert 是基于RKNN_TOOLKIT的封装的应用脚本，工具集。
 
 ## install
 ```
@@ -25,6 +25,17 @@ python -m zalaiConvert.convert.onnx2rknn yolov4_mirror_best.weights --darknet-cf
 ```
 
 ### rknn farward
+
+#### 图像分类
+基于imagenet 1000类别的mobilenet的分类网络。
+``` bash
+python -m zalaiConvert.farward.rknn_classify_farward mobile.rknn -i test.jpg -o out_q.jpg  --name-file class.txt 
+```
+
+#### 目标检测
+基于yolov3 的目标检测
 ```
 python -m zalaiConvert.farward.rknn_yolo_farward abc_q.rknn -i test.jpg -o out_q.jpg --network yolov4.cfg --name-file class.txt --device rk1808
 ```
+
+

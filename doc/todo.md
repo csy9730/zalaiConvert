@@ -38,10 +38,37 @@
 - [x] add: onnx2rknn:: --input-size-list
 - [ ] add: flask + rknn, web api
 - [ ] merge: yolov3 yolov4
-- [ ] add: cameraViewer
+- [x] add: cameraViewer
 - [ ] 
 
 
 ```
 python -c "import sys;import os;os.environ['PATH'] = ';'.join([r'H:\project\mylib\py_misc_project', os.environ['PATH']]);os.system('cmd')"          
 ```
+
+## 20210901
+- [x] merge: yolov3 yolov4
+- [x] test: onnx
+- [x] test: darknet
+- [x] test: pytorch/torchscript
+- [ ] test: tensorflow
+- [ ] test: caffe
+- [ ] test: mxnet
+- [ ] test: tflite
+
+- [x] add: keypoint
+    - [x] pfld
+    - [x] simple baselines
+    - [x] posenet cpm
+    - [x] openpose cpm
+    - [x] ~~hrnet landmark~~
+- [ ] add: segment
+    - [ ] unet
+    - [ ] erfnet
+- [x] add: detect
+    - [x] yolov3
+    - [x] yolov4
+    - [ ] yolov5
+- [x] add: classify net
+    - [x] mobilenet
+    - [ ] vgg

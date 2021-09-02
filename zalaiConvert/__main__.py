@@ -20,15 +20,16 @@ def main(cmd=None):
                 startserver           start adb server & ntb server
                 convert               convert using a pretrained model
                 visualization         convert with visualization tool
-                activate              rknn_strings.sh
-                
+                activate              use rknn_strings.sh
+                rknnstrings           show strings from rknn file
+
                 zalaiConvert.convert.onnx2rknn
                 zalaiConvert.farward.rknn_yolo_farward
                 ''' % prog_name)
 
     parser.add_argument('command', help='Subcommand to run')
     args = parser.parse_args(cmd[0:1])
-    if args.command in ["list", "convert", "killserver", "startserver", "visualization", "activate"]:
+    if args.command in ["list", "convert", "killserver", "startserver", "visualization", "activate", "rknnstrings"]:
         if args.command == "list":
             from zalaiConvert.device_utils import main as devices
             devices(cmd[1:])
@@ -46,7 +47,10 @@ def main(cmd=None):
             os.system('python -m rknn.bin.visualization')  
         elif args.command == "activate":
             activateEnv()
-            os.system('cmd')          
+            os.system('cmd') 
+        elif args.command == "rknnstrings":
+            activateEnv()
+            os.system('strings %s |grep version' % cmd[1])         
     else:
         parser.print_help()
 
