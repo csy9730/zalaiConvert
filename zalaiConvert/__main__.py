@@ -3,7 +3,7 @@ import os
 import argparse
 import os.path as osp
 sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), "../.."))
-from zalaiConvert.farward.farward_utils import activateEnv
+from zalaiConvert.utils.farward_utils import activateEnv
 
 
 def main(cmd=None):

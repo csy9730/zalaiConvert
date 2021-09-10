@@ -47,6 +47,7 @@ python -c "import sys;import os;os.environ['PATH'] = ';'.join([r'H:\project\myli
 ```
 
 ## 20210901
+
 - [x] merge: yolov3 yolov4
 - [x] test: onnx
 - [x] test: darknet
@@ -55,6 +56,13 @@ python -c "import sys;import os;os.environ['PATH'] = ';'.join([r'H:\project\myli
 - [ ] test: caffe
 - [ ] test: mxnet
 - [ ] test: tflite
+
+- [x] add: farward image + camera
+- [x] add: farward video
+- [ ] add: farward video saver
+- [ ] add: multiprocess farward
+- [ ] yolov5 postprocess
+
 
 - [x] add: keypoint
     - [x] pfld
@@ -72,3 +80,12 @@ python -c "import sys;import os;os.environ['PATH'] = ';'.join([r'H:\project\myli
 - [x] add: classify net
     - [x] mobilenet
     - [ ] vgg
+
+
+- converter
+	- pure converter
+- predictor
+	- farwarder
+	- preprocesser
+	- postprocesser
+    - camera

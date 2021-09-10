@@ -138,6 +138,28 @@ E ValueError: Try match Upsample_3431:out0 failed, catch exception!
 ```
 
 
+### erfnet
+```
+
+(rk161) E:\nnCollect\zalaiConvert\proj\erfnet>bash2 to_rknn.sh
+--> config model
+done
+--> Loading model
+erfnet.pt ********************
+E convolution output_padding only suport [0,0] for now, but meet [1,1]
+E Catch exception when loading pytorch model: erfnet.pt!
+E Traceback (most recent call last):
+E   File "rknn\api\rknn_base.py", line 353, in rknn.api.rknn_base.RKNNBase.load_pytorch
+E   File "rknn\base\RKNNlib\RK_nn.py", line 146, in rknn.base.RKNNlib.RK_nn.RKnn.load_pytorch
+E   File "rknn\base\RKNNlib\app\importer\import_pytorch.py", line 128, in rknn.base.RKNNlib.app.importer.import_pytorch.ImportPytorch.run
+E   File "rknn\base\RKNNlib\converter\convert_pytorch_new.py", line 2721, in rknn.base.RKNNlib.converter.convert_pytorch_new.convert_pytorch.load
+E   File "rknn\base\RKNNlib\converter\convert_pytorch_new.py", line 2861, in rknn.base.RKNNlib.converter.convert_pytorch_new.convert_pytorch.parse_nets
+E   File "rknn\base\RKNNlib\converter\convert_pytorch_new.py", line 2528, in rknn.base.RKNNlib.converter.convert_pytorch_new.PyTorchOpConverter.convert_operators
+E   File "rknn\base\RKNNlib\converter\convert_pytorch_new.py", line 697, in rknn.base.RKNNlib.converter.convert_pytorch_new.PyTorchOpConverter.convolution
+E   File "rknn\api\rknn_log.py", line 312, in rknn.api.rknn_log.RKNNLog.e
+E ValueError: convolution output_padding only suport [0,0] for now, but meet [1,1]
+Load model failed!
+```
 
 ## tensorflow
 ### OutOfRangeError FIFOQueue 
@@ -295,3 +317,4 @@ from tensorflow.python import tanh
 ```
 
 修改`tensorflow\math\__init__.py`, 添加 上面的语句。
+

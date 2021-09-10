@@ -109,7 +109,7 @@ def predictWrap(source, model, args=None):
     for i, img in enumerate(imgs):
         t0 = time.time()
         if img.shape[0:2] != (H, W):
-            img = cv2.resize(img, (H, W)) 
+            img = cv2.resize(img, (W, H)) 
         kpts = model.predict(img)
 
         print("time: ", time.time() - t0)

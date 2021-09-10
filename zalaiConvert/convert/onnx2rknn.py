@@ -116,19 +116,24 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
         return ret
     print('done')
 
+    if os.name == "nt" and pre_compile:
+        pre_compile2 = False
+        assert device
+    else:
+        pre_compile2 = pre_compile
+    
     # Build model
     print('--> Building model')
     if do_quantization:
         assert os.path.exists(dataset)
-    ret = rknn.build(do_quantization=do_quantization, dataset=dataset, pre_compile=pre_compile)
+    ret = rknn.build(do_quantization=do_quantization, dataset=dataset, pre_compile=pre_compile2)
     if ret != 0:
         print('Build model failed!')
         return ret
     print('done')
 
     print('--> Init runtime environment')
-    if device:
-        ret = rknn.init_runtime(target=device, eval_mem=False, rknn2precompile=pre_compile)
+    ret = rknn.init_runtime(target=device, eval_mem=False, rknn2precompile=pre_compile)
     if ret != 0:
         print('Init runtime environment failed')
         return ret

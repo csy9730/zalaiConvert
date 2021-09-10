@@ -6,9 +6,9 @@ import torch
 import cv2
 from rknn.api import RKNN
 
-from zalaiConvert.farward.cameraViewer import CameraViewer  
-from zalaiConvert.farward.farward_utils import activateEnv, timeit, parse_args, loadClassname
-from zalaiConvert.farward.farward_utils import getRknn, RknnPredictor, rknn_query_model, get_io_shape
+from zalaiConvert.utils.cameraViewer import CameraViewer  
+from zalaiConvert.utils.farward_utils import activateEnv, timeit, parse_args, loadClassname, RknnPredictor
+from zalaiConvert.utils.rknn_utils import getRknn, rknn_query_model, get_io_shape
 
 activateEnv()
 

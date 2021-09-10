@@ -4,11 +4,11 @@ import time
 import numpy as np
 import torch
 import cv2
-from rknn.api import RKNN
 
-from zalaiConvert.farward.cameraViewer import CameraViewer  
-from zalaiConvert.farward.farward_utils import activateEnv, timeit, draw_pts, parse_args
-from zalaiConvert.farward.farward_utils import getRknn, RknnPredictor, rknn_query_model, get_io_shape
+
+from zalaiConvert.utils.cameraViewer import CameraViewer  
+from zalaiConvert.utils.farward_utils import activateEnv, timeit, parse_args, RknnPredictor
+from zalaiConvert.utils.rknn_utils import getRknn, rknn_query_model, get_io_shape
 
 activateEnv()
 
@@ -59,14 +59,17 @@ class RknnSegPredictor(RknnPredictor):
         self.rknn = rknn
         self.width, self.height = 416, 416
         self.guess_cfg()
+        self._axis = 0 # CHW for pytorch/onnx
 
     def guess_cfg(self):
         self.mcfg = rknn_query_model(self.rknn.model_path)
         self.in_shape, self.out_shape = get_io_shape(self.mcfg)
-        print(self.in_shape, self.out_shape)
-        # if self.mcfg
+        
+        if self.mcfg.get("target_platform") == 'tensorflow':
+            self._axis = 2 # HWC for tensorflow
+
         # self.NUM_CLS = self.out_shape[0][1]
-        self.width, self.height = 512, 288 # self.in_shape[3], self.in_shape[2]
+        self.width, self.height = self.in_shape[3], self.in_shape[2]
         print(self.in_shape, self.out_shape)
 
     def farward(self, x):
@@ -77,10 +80,8 @@ class RknnSegPredictor(RknnPredictor):
         print(kpts.shape)
         kpts = kpts.squeeze(0)
         # output_img = np.transpose(output_img, (1, 2, 0))
-        if 0:
-            output_img = np.argmax(kpts, axis=2)
-        else:
-            output_img = np.argmax(kpts, axis=0)
+
+        output_img = np.argmax(kpts, axis=self._axis)
         output_img = label_to_color(output_img, COLOR_LIST)
     
         return output_img
@@ -124,7 +125,7 @@ def main(cmds=None):
     elif args.output is None:
         args.output = 'out.jpg'
         args.save_img = True
-
+    
     rknn = getRknn(args.model, device=args.device, device_id=args.device_id)
     if rknn is None:
         exit(-1)

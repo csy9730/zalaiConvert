@@ -3,8 +3,8 @@ import os,sys
 
 import numpy as np
 
-from zalaiConvert.farward.farward_utils import activateEnv
-from zalaiConvert.farward.farward_utils import getRknn
+from zalaiConvert.utils.farward_utils import activateEnv
+from zalaiConvert.utils.farward_utils import getRknn
 
 activateEnv()
 

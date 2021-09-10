@@ -23,6 +23,11 @@ NTB(Non-Transparent Bridge), windows 系统下使用NTB协议连接设备。
 - windows: `Lib\site-packages\rknn\3rdparty\platform-tools\ntp\windows-x86_64\npu_transfer_proxy.exe`
 - linux: `lib/python3.6/site-packages/rknn/3rdparty/platform-tools/ntp/linux-x86_64/npu_transfer_proxy`
 
+### network
+
+`ifconfig eth0 192.168.1.136 netmask 255.255.255.0`
+
+
 
 ## device
 ### /usr/bin/start_usb.sh

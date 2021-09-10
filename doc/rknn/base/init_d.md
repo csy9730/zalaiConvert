@@ -172,6 +172,14 @@ exit $?
 
 
 ### /etc/init.d/S999start_network
+
+``` bash
+vim /etc/init.d/S999start_network
+chmod +x /etc/init.d/S999start_network
+
+```
+
+内容如下
 ``` bash
 #!/bin/sh
 #
@@ -182,7 +190,8 @@ case "$1" in
   start)
         printf "Starting io network: \n"
         io -4 -w 0xfe000900 0xffff050a
-		# ping 192.168.1.101 
+	  # ping 192.168.1.101 
+        # ifconfig eth0 192.168.1.136 netmask 255.255.255.0
         ;;
   stop)
         printf "Stopping io network: \n"
