@@ -76,7 +76,7 @@ python -c "import sys;import os;os.environ['PATH'] = ';'.join([r'H:\project\myli
 - [x] add: detect
     - [x] yolov3
     - [x] yolov4
-    - [ ] yolov5
+    - [x] yolov5
 - [x] add: classify net
     - [x] mobilenet
     - [ ] vgg
@@ -85,7 +85,7 @@ python -c "import sys;import os;os.environ['PATH'] = ';'.join([r'H:\project\myli
 - converter
 	- pure converter
 - predictor
-	- farwarder
+	- forwarder
 	- preprocesser
 	- postprocesser
     - camera

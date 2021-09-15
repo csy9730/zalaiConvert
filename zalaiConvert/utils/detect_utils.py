@@ -48,68 +48,6 @@ def parse_model_cfg(path):
     return mdefs
 
 
-def filter_boxes(boxes, box_confidences, box_class_probs, OBJ_THRESH=0.5):
-    """Filter boxes with object threshold.
-
-    # Arguments
-        boxes: ndarray, boxes of objects.
-        box_confidences: ndarray, confidences of objects.
-        box_class_probs: ndarray, class_probs of objects.
-
-    # Returns
-        boxes: ndarray, filtered boxes.
-        classes: ndarray, classes for boxes.
-        scores: ndarray, scores for boxes.
-    """
-    box_scores = box_confidences * box_class_probs
-    box_classes = np.argmax(box_scores, axis=-1)
-    box_class_scores = np.max(box_scores, axis=-1)
-    pos = np.where(box_class_scores >= OBJ_THRESH)
-
-    boxes = boxes[pos]
-    classes = box_classes[pos]
-    scores = box_class_scores[pos]
-
-    return boxes, classes, scores
-
-def nms_boxes(boxes, scores, NMS_THRESH=0.5):
-    """Suppress non-maximal boxes.
-
-    # Arguments
-        boxes: ndarray, boxes of objects.
-        scores: ndarray, scores of objects.
-
-    # Returns
-        keep: ndarray, index of effective boxes.
-    """
-    x = boxes[:, 0]
-    y = boxes[:, 1]
-    w = boxes[:, 2]
-    h = boxes[:, 3]
-
-    areas = w * h
-    order = scores.argsort()[::-1]
-
-    keep = []
-    while order.size > 0:
-        i = order[0]
-        keep.append(i)
-
-        xx1 = np.maximum(x[i], x[order[1:]])
-        yy1 = np.maximum(y[i], y[order[1:]])
-        xx2 = np.minimum(x[i] + w[i], x[order[1:]] + w[order[1:]])
-        yy2 = np.minimum(y[i] + h[i], y[order[1:]] + h[order[1:]])
-
-        w1 = np.maximum(0.0, xx2 - xx1 + 0.00001)
-        h1 = np.maximum(0.0, yy2 - yy1 + 0.00001)
-        inter = w1 * h1
-
-        ovr = inter / (areas[i] + areas[order[1:]] - inter)
-        inds = np.where(ovr <= NMS_THRESH)[0]
-        order = order[inds + 1]
-    keep = np.array(keep)
-    return keep
-
 
 
 OBJ_THRESH = 0.5
@@ -124,6 +62,7 @@ def unsigmoid(x):
 
 def process(input, mask, anchors, width=416):
     """
+        @params
         input: float[GRID0, GRID0, SPAN, LISTSIZE], SPAN=2 or 3, LISTSIZE= NUM_CLASS+5
             input[LISTSIZE] = [x,y,w,h, box_conf, *cls_conf[...]]
                 w_t = exp(w), h_t=exp(h) , 显然 w <=0，h<=0
@@ -131,6 +70,7 @@ def process(input, mask, anchors, width=416):
         mask: [int]             mask is index of anchors
         anchors: [[int, int],]
 
+        @returns
         box: [left,top, width, height],   normalize
         box_confidence:                 , normalize
         box_class_probs                 , normalize
@@ -205,6 +145,54 @@ def process2(input, mask, anchors, width=416):
 
     return box, box_confidence, box_class_probs
 
+
+def process_yolov5(input, mask, anchors, width=416):
+    """
+        @params
+        input: float[GRID0, GRID0, SPAN, LISTSIZE], SPAN=2 or 3, LISTSIZE= NUM_CLASS+5
+            input[LISTSIZE] = [x,y,w,h, box_conf, *cls_conf[...]]
+                w_t = exp(w), h_t=exp(h) , æ˜¾ç„¶ w <=0ï¼Œh<=0
+                x_t = sigmoid(x), y_t = sigmoid(y) 
+        mask: [int]             mask is index of anchors
+        anchors: [[int, int],]
+        @returns
+        box: [left,top, width, height],   normalize
+        box_confidence:                 , normalize
+        box_class_probs                 , normalize
+    """
+    print(input.shape, "shape")
+    anchors = [anchors[i] for i in mask]
+    grid_h, grid_w = map(int, input.shape[0:2])
+
+    box_confidence = sigmoid(input[..., 4])
+    box_confidence = np.expand_dims(box_confidence, axis=-1)
+
+    box_class_probs = sigmoid(input[..., 5:])
+
+    box_xy = sigmoid(input[..., :2])*2 - 0.5
+    box_wh = (sigmoid(input[..., 2:4])*2)**2
+    box_wh = box_wh * anchors
+
+    # y = x[i].sigmoid()
+    # y[..., 0:2] = (y[..., 0:2] * 2. - 0.5 + self.grid[i]) * self.stride[i]  # xy
+    # y[..., 2:4] = (y[..., 2:4] * 2) ** 2 * self.anchor_grid[i]  # wh
+    # z.append(y.view(bs, -1, self.no))
+
+    col = np.tile(np.arange(0, grid_w), grid_w).reshape(-1, grid_w)
+    row = np.tile(np.arange(0, grid_h).reshape(-1, 1), grid_h)
+
+    col = col.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
+    row = row.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
+    grid = np.concatenate((col, row), axis=-1)
+
+    box_xy += grid
+    box_xy /= (grid_w, grid_h)
+    box_wh /= (width, width)
+    box_xy -= (box_wh / 2.)
+    box = np.concatenate((box_xy, box_wh), axis=-1)
+
+    return box, box_confidence, box_class_probs
+
 def yolov3_post_process(input_data, anchors=None, masks=None):
     # yolov3
     if masks is None:
@@ -252,6 +240,115 @@ def yolov3_post_process(input_data, anchors=None, masks=None):
     return boxes, classes, scores
 
 
+def yolov5_post_process(input_data, anchors=None, masks=None):
+    # yolov3
+    if masks is None:
+        masks = [ [0, 1, 2], [3, 4, 5],[6, 7, 8]]
+    if anchors is None:
+        anchors = [[10, 17],  [19, 34], [31, 62],  [34, 163],  [58, 9],  [63, 49], [107, 152], [142, 307], [282, 367]]
+
+        anchors = [[10,13, 16,30, 33,23], [30,61, 62,45, 59,119],[116,90, 156,198, 373,326]]
+    
+    candbox = np.array(anchors)
+    candbox = np.reshape(candbox, (-1, 2))
+    print(candbox)
+
+    boxes, classes, scores = [], [], []
+    for input,mask in zip(input_data, masks):
+        b, c, s = process_yolov5(input, mask, candbox)
+        b, c, s = filter_boxes(b, c, s)
+        boxes.append(b)
+        classes.append(c)
+        scores.append(s)
+
+    boxes = np.concatenate(boxes)
+    classes = np.concatenate(classes)
+    scores = np.concatenate(scores)
+
+    nboxes, nclasses, nscores = [], [], []
+    for c in set(classes):
+        inds = np.where(classes == c)
+        b = boxes[inds]
+        c = classes[inds]
+        s = scores[inds]
+
+        keep = nms_boxes(b, s)
+
+        nboxes.append(b[keep])
+        nclasses.append(c[keep])
+        nscores.append(s[keep])
+
+    if not nclasses and not nscores:
+        return None, None, None
+
+    boxes = np.concatenate(nboxes)
+    classes = np.concatenate(nclasses)
+    scores = np.concatenate(nscores)
+
+    return boxes, classes, scores
+
+def filter_boxes(boxes, box_confidences, box_class_probs, OBJ_THRESH=0.5):
+    """Filter boxes with object threshold.
+
+    # Arguments
+        boxes: ndarray, boxes of objects.
+        box_confidences: ndarray, confidences of objects.
+        box_class_probs: ndarray, class_probs of objects.
+
+    # Returns
+        boxes: ndarray, filtered boxes.
+        classes: ndarray, classes for boxes.
+        scores: ndarray, scores for boxes.
+    """
+    box_scores = box_confidences * box_class_probs
+    box_classes = np.argmax(box_scores, axis=-1)
+    box_class_scores = np.max(box_scores, axis=-1)
+    pos = np.where(box_class_scores >= OBJ_THRESH)
+
+    boxes = boxes[pos]
+    classes = box_classes[pos]
+    scores = box_class_scores[pos]
+
+    return boxes, classes, scores
+
+def nms_boxes(boxes, scores, NMS_THRESH=0.5):
+    """Suppress non-maximal boxes.
+
+    # Arguments
+        boxes: ndarray, boxes of objects.
+        scores: ndarray, scores of objects.
+
+    # Returns
+        keep: ndarray, index of effective boxes.
+    """
+    x = boxes[:, 0]
+    y = boxes[:, 1]
+    w = boxes[:, 2]
+    h = boxes[:, 3]
+
+    areas = w * h
+    order = scores.argsort()[::-1]
+
+    keep = []
+    while order.size > 0:
+        i = order[0]
+        keep.append(i)
+
+        xx1 = np.maximum(x[i], x[order[1:]])
+        yy1 = np.maximum(y[i], y[order[1:]])
+        xx2 = np.minimum(x[i] + w[i], x[order[1:]] + w[order[1:]])
+        yy2 = np.minimum(y[i] + h[i], y[order[1:]] + h[order[1:]])
+
+        w1 = np.maximum(0.0, xx2 - xx1 + 0.00001)
+        h1 = np.maximum(0.0, yy2 - yy1 + 0.00001)
+        inter = w1 * h1
+
+        ovr = inter / (areas[i] + areas[order[1:]] - inter)
+        inds = np.where(ovr <= NMS_THRESH)[0]
+        order = order[inds + 1]
+    keep = np.array(keep)
+    return keep
+
 def draw_box(image, boxes, scores, classes, class_list):
     """Draw the boxes on the image.
 
@@ -280,3 +377,4 @@ def draw_box(image, boxes, scores, classes, class_list):
                     (left, top - 6),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6, (0, 0, 255), 1)
+    return image

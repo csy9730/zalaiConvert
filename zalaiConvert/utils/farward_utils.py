@@ -4,7 +4,7 @@ import time
 from functools import wraps
 import cv2
 import numpy as np
-from .rknn_utils import *
+
 
 def activateEnv(pth=None):
     if pth is None:
@@ -44,6 +44,14 @@ def timeit(func):
         return retval 
     return wrapper
 
+
+def decorator_retval(retval):
+    @wraps(func)
+    def set_args(f):
+        def decorated(*args, **kwargs):
+            return retval
+        return decorated
+    return set_args
 
 def genImageDatasetList(data_dir, output=None):
     lst = os.listdir(data_dir)
@@ -179,7 +187,6 @@ def parse_args(cmds=None):
     parser.add_argument('--output', '-o', help='save output image name')
     parser.add_argument('--config')
 
-
     parser.add_argument('--network', '--network-cfg', '-nw')
     parser.add_argument('--name-file', help='class name file')
 
@@ -215,6 +222,8 @@ def predictWrap(source, model, args=None):
     W, H = model.width, model.height
 
     for i, img in enumerate(imgs):
+        if img.shape[0:2] != (H, W):
+            img = cv2.resize(img, (W, H))
         pred = model.predict(img, args)
         img2 = model.draw(img, pred)
 

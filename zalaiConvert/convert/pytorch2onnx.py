@@ -5,6 +5,7 @@ import argparse
 import cv2
 import math
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -12,8 +13,6 @@ import torch.backends.cudnn as cudnn
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from lib.config import config, update_config
 
-
-import numpy as np
 
 __DIR__ = os.path.dirname(os.path.abspath(__file__))
 

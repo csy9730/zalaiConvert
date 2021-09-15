@@ -3,13 +3,15 @@ import sys
 import time
 import numpy as np
 import cv2
-from rknn.api import RKNN
+
 
 from zalaiConvert.utils.cameraViewer import CameraViewer  
-from zalaiConvert.utils.farward_utils import activateEnv, loadClassname, \
-    timeit, parse_args, RknnPredictor
+from zalaiConvert.utils.farward_utils import activateEnv, loadClassname, timeit, parse_args, RknnPredictor
+from zalaiConvert.utils.detect_utils import parse_model_cfg, filter_boxes, nms_boxes
 from zalaiConvert.utils.rknn_utils import getRknn, rknn_query_model, get_io_shape
-from zalaiConvert.utils.detect_utils import nms_boxes, filter_boxes, parse_model_cfg, yolov3_post_process, draw_box
+from zalaiConvert.utils.detect_utils import yolov5_post_process, draw_box
+
+
 
 activateEnv()
 
@@ -21,23 +23,26 @@ class RknnPredictor(object):
         self.NUM_CLS = None
         self.masks = None
         self.width, self.height = 416, 416
-        self.GRID = [13, 26, 52]
+        self.GRID = [52, 26, 13]
         self.SPAN = 3
         
         self._cfg_path = None
+        self.loadCfg()
+        # self.loadGenClass()
 
     def guess_cfg(self):
         self.mcfg = rknn_query_model(self.rknn.model_path)
         self.in_shape, self.out_shape = get_io_shape(self.mcfg)
-        
-        self.set_NUMCLS(self.out_shape[0][1] // self.SPAN - 5)
+
         print(self.in_shape, self.out_shape)
+        # [[1, 3, 416, 416]] [[1, 3, 52, 52, 13], [1, 3, 26, 26, 13], [1, 3, 13, 13, 13]]
+        self.set_NUMCLS(self.out_shape[0][4] - 5)
 
         self.GRID = [a[2] for a in self.out_shape]
 
     def set_NUMCLS(self, NUM_CLS):
         if self.NUM_CLS:
-            assert self.NUM_CLS == NUM_CLS
+            assert self.NUM_CLS == NUM_CLS, (self.NUM_CLS, NUM_CLS)
         else:
             self.NUM_CLS = NUM_CLS
 
@@ -46,16 +51,23 @@ class RknnPredictor(object):
         return self.NUM_CLS + 5
 
     def loadCfg(self, cfg_path=None):
-        if cfg_path:
-            pmc = parse_model_cfg(cfg_path)
-            yolos = [s for s in pmc if s['type']=='yolo']
-            self.set_NUMCLS(yolos[0]["classes"])
-            self.anchors = yolos[0]["anchors"]
-            self.SPAN = len(yolos[0]["mask"])
-            self.masks = [y["mask"] for y in yolos]
+        if cfg_path is None:
+            return
+        import yaml
+        self._cfg_path = cfg_path
+
+        assert os.path.isfile(cfg_path)
+        with open(cfg_path) as f:
+            yaml = yaml.load(f, Loader=yaml.SafeLoader)  # model dict
+
+            self.set_NUMCLS(yaml["nc"])
+            self.anchors = yaml["anchors"]
+            self.SPAN = len(yaml["anchors"])
+
+            self.masks = [[0,1,2], [3,4,5], [6,7,8]]
             print(self.masks,self.SPAN)
-            self._cfg_path = cfg_path
-            self.guess_cfg()
+
+        self.guess_cfg()
             
     def loadGenClass(self, name_file=None):
         if name_file:
@@ -78,13 +90,14 @@ class RknnPredictor(object):
 
     def postProcess(cls, preds):
         """
-            SPAN, LISTSIZE, GRID0, GRID0,  => GRID0, GRID0, SPAN, LISTSIZE
+            SPAN, GRID0, GRID0, LISTSIZE  => GRID0, GRID0, SPAN, LISTSIZE
         """
         input_data = [
-            np.transpose(preds[i].reshape(cls.SPAN, cls.LISTSIZE, g, g), (2, 3, 0, 1))
+            # np.transpose(preds[i].reshape(cls.SPAN, cls.LISTSIZE, g, g), (2, 3, 0, 1))
+            np.transpose(preds[i].reshape(cls.SPAN, g, g, cls.LISTSIZE), (1, 2, 0, 3))
             for i, g in enumerate(cls.GRID)
         ]
-        boxes, classes, scores = yolov3_post_process(input_data, cls.anchors, cls.masks)
+        boxes, classes, scores = yolov5_post_process(input_data, cls.anchors, cls.masks)
         return boxes, classes, scores
 
     @timeit  
@@ -111,8 +124,13 @@ def predictWrap(source, model, args=None):
     W, H = model.width, model.height
 
     for i, img in enumerate(imgs):
+        # if img.shape[0:2] != (W, H):
+        #     img = cv2.resize(img, (W, H))
+        # t0 = time.time()
         boxes, classes, scores = model.predict(img, args)
-        model.draw(img, (boxes, classes, scores))
+        # print("time: ", time.time() - t0)
+        if boxes is not None:
+            draw_box(img, boxes, scores, classes, model.class_list)
 
         # if args.save_npy:
         #     np.save('out_{0}.npy'.format(i=i), pred[0])
