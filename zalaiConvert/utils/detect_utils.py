@@ -48,8 +48,6 @@ def parse_model_cfg(path):
     return mdefs
 
 
-
-
 OBJ_THRESH = 0.5
 # MAX_BOXES = 500
 # NMS_THRESH = 0.5
@@ -63,15 +61,19 @@ def unsigmoid(x):
 def process(input, mask, anchors, width=416):
     """
         @params
-        input: float[GRID0, GRID0, SPAN, LISTSIZE], SPAN=2 or 3, LISTSIZE= NUM_CLASS+5
-            input[LISTSIZE] = [x,y,w,h, box_conf, *cls_conf[...]]
-                w_t = exp(w), h_t=exp(h) , 显然 w <=0，h<=0
-                x_t = sigmoid(x), y_t = sigmoid(y) 
+        input: float[GRID, GRID, SPAN, LISTSIZE], SPAN=2 or 3, LISTSIZE= NUM_CLASS+5
+            input[LISTSIZE] = [dx,dy,dw,dh, box_conf, *cls_conf[...]]
+                w = exp(dw) * anchor_w / img_w, 显然 w <=0，h<=0 
+                h = exp(dh) * anchor_h / img_h
+                cx = (sigmoid(dx) + GW[i] )/ GRID
+                cy = (sigmoid(dy) + gh[i] )/ GRID
+                conf = sigmoid(dConf)
+                prob = sigmoid(dProb)
         mask: [int]             mask is index of anchors
         anchors: [[int, int],]
 
         @returns
-        box: [left,top, width, height],   normalize
+        box: [left, top, width, height],   normalize
         box_confidence:                 , normalize
         box_class_probs                 , normalize
     """

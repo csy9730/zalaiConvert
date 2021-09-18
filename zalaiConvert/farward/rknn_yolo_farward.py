@@ -100,7 +100,7 @@ class RknnPredictor(object):
         return preds
 
     def draw(self, img, preds):
-        boxes, scores, classes = preds
+        boxes, classes, scores = preds
         if boxes is not None:
             return draw_box(img, boxes, scores, classes, self.class_list)
         return img
@@ -111,8 +111,8 @@ def predictWrap(source, model, args=None):
     W, H = model.width, model.height
 
     for i, img in enumerate(imgs):
-        boxes, classes, scores = model.predict(img, args)
-        model.draw(img, (boxes, classes, scores))
+        preds = model.predict(img, args)
+        img2 = model.draw(img, preds)
 
         # if args.save_npy:
         #     np.save('out_{0}.npy'.format(i=i), pred[0])

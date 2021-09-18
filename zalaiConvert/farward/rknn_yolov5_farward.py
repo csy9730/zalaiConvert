@@ -7,10 +7,8 @@ import cv2
 
 from zalaiConvert.utils.cameraViewer import CameraViewer  
 from zalaiConvert.utils.farward_utils import activateEnv, loadClassname, timeit, parse_args, RknnPredictor
-from zalaiConvert.utils.detect_utils import parse_model_cfg, filter_boxes, nms_boxes
 from zalaiConvert.utils.rknn_utils import getRknn, rknn_query_model, get_io_shape
 from zalaiConvert.utils.detect_utils import yolov5_post_process, draw_box
-
 
 
 activateEnv()
@@ -65,7 +63,7 @@ class RknnPredictor(object):
             self.SPAN = len(yaml["anchors"])
 
             self.masks = [[0,1,2], [3,4,5], [6,7,8]]
-            print(self.masks,self.SPAN)
+            print(self.masks, self.SPAN)
 
         self.guess_cfg()
             
@@ -87,6 +85,8 @@ class RknnPredictor(object):
             input_image = input_image.transpose([2, 0, 1])
 
         return [input_image]
+    @timeit  
+
 
     def postProcess(cls, preds):
         """
@@ -100,7 +100,6 @@ class RknnPredictor(object):
         boxes, classes, scores = yolov5_post_process(input_data, cls.anchors, cls.masks)
         return boxes, classes, scores
 
-    @timeit  
     def farward(self, x):
         outputs = self.rknn.inference(inputs=x)
         return outputs
@@ -113,7 +112,7 @@ class RknnPredictor(object):
         return preds
 
     def draw(self, img, preds):
-        boxes, scores, classes = preds
+        boxes, classes, scores = preds
         if boxes is not None:
             return draw_box(img, boxes, scores, classes, self.class_list)
         return img
@@ -124,22 +123,17 @@ def predictWrap(source, model, args=None):
     W, H = model.width, model.height
 
     for i, img in enumerate(imgs):
-        # if img.shape[0:2] != (W, H):
-        #     img = cv2.resize(img, (W, H))
-        # t0 = time.time()
-        boxes, classes, scores = model.predict(img, args)
-        # print("time: ", time.time() - t0)
-        if boxes is not None:
-            draw_box(img, boxes, scores, classes, model.class_list)
+        preds = model.predict(img, args)
+        img2 = model.draw(img, preds)
 
         # if args.save_npy:
         #     np.save('out_{0}.npy'.format(i=i), pred[0])
 
         if args.save_img:
-            cv2.imwrite(args.output.format(i=i), img.astype(np.uint8))
+            cv2.imwrite(args.output.format(i=i), img2.astype(np.uint8))
 
         if cmv.use_camera or args.show_img:
-            cv2.imshow(cmv.title.format(i=i), img)
+            cv2.imshow(cmv.title.format(i=i), img2)
             k = cv2.waitKey(cmv.waitTime)
             if k == 27:
                 break

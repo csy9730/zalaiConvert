@@ -16,15 +16,14 @@ import time
 import numpy as np
 import torch
 
-from zalaiConvert.utils.detect_utils import draw_box, yolov5_post_process
-from zalaiConvert.utils.cameraViewer import CameraViewer
+from zalaiConvert.utils.detect_utils import draw_box, yolov5_post_processfrom zalaiConvert.utils.cameraViewer import CameraViewer
 from zalaiConvert.utils.farward_utils import predictWrap, timeit, loadClassname
+from zalaiConvert.utils.detect_utils import yolov5_post_process, draw_box
 __DIR__ = os.path.dirname(os.path.abspath(__file__))
 
 
 class Yolov5OnnxPredictor():
     def __init__(self, model_file):
-        super(Yolov5OnnxPredictor, self).__init__()
         self.loadModel(model_file)
         # self.width = 256
         # self.height = 256
@@ -33,11 +32,9 @@ class Yolov5OnnxPredictor():
         self.NUM_CLS = None
         self.masks = None
         self.width, self.height = 416, 416
-        self.GRID = [52,26,13]
+        self.GRID = [52, 26, 13]
         self.SPAN = 3
 
-        self.width = 416
-        self.height = 416
         self.mean = np.array([0, 0., 0.], dtype=np.float32)*255
         self.std = np.array([1, 1, 1], dtype=np.float32)*255
 
@@ -106,9 +103,7 @@ class Yolov5OnnxPredictor():
         #print("input_tensor.shape", input_tensor.shape)
         return input_tensor
 
-    def farward(self, x):
-        pred_onx = self.sess.run([self.label_name, self.label_name2, self.label_name3], {self.input_name: x})
-        return pred_onx # [0]
+
 
     def postProcess(self, preds):
         """
@@ -123,8 +118,10 @@ class Yolov5OnnxPredictor():
         ]
         boxes, classes, scores = yolov5_post_process(input_data, self.anchors, self.masks)
         return boxes, classes, scores
-
-    # @timeit
+    def farward(self, x):
+        pred_onx = self.sess.run([self.label_name, self.label_name2, self.label_name3], {self.input_name: x})
+        return pred_onx # [0]
+    @timeit
     def predict(self, img):
         input_tensor = self.preprocess(img)
         score_map = self.farward(input_tensor.numpy())
@@ -134,7 +131,6 @@ class Yolov5OnnxPredictor():
 
     def draw(self, img, preds):
         boxes, classes, scores = preds
-        print(preds)
         if boxes is not None:
             return draw_box(img, boxes, scores, classes, self.class_list)
         return img
