@@ -80,6 +80,12 @@ python -c "import sys;import os;os.environ['PATH'] = ';'.join([r'H:\project\myli
 - [x] add: classify net
     - [x] mobilenet
     - [ ] vgg
+- [ ] add: pose 
+    - [ ] add: openpose.onnx
+    - [ ] add: openpose.rknn
+- [ ] add: face
+      - [ ] add: retina face net (SSD)
+      - [ ] add: ultra fast face net (SSD)
 
 
 - converter

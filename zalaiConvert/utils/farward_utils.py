@@ -33,6 +33,29 @@ def activateEnv(pth=None):
     os.environ['PATH'] = ';'.join(lst)
 
 
+def fLoadMat(filename):
+    N_OFS = 4
+    shape = np.memmap(filename, 'int32', 'r', shape=(N_OFS,))
+    shape = tuple([s for s in shape if s])  # np.array(shape).tolist()
+
+    datas = np.memmap(filename, 'float32', 'r', offset=N_OFS*4)
+    das = np.array(datas)
+    das = das.reshape(shape)
+    # print(shape, das)
+    return das
+
+
+def fDumpMat(filename, data):
+    N_OFS = 4
+    shape = data.shape
+
+    f = np.memmap(filename, 'int32', 'w+', shape=(N_OFS,))
+    f[:len(shape)] = shape
+    # f.flush()
+    f2 = np.memmap(filename, 'float32', 'r+', shape=shape, offset=N_OFS*4)
+    f2[:] = data[:]
+    f2.flush()
+
 def timeit(func): 
     @wraps(func)
     def wrapper(*dargs, **kwargs):

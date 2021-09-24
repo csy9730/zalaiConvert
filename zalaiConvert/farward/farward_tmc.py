@@ -3,7 +3,7 @@ import os,sys
 
 import numpy as np
 
-from zalaiConvert.utils.farward_utils import activateEnv
+from zalaiConvert.utils.farward_utils import activateEnv, fDumpMat
 from zalaiConvert.utils.rknn_utils import getRknn
 
 activateEnv()
@@ -36,9 +36,11 @@ def main(cmds=None):
     for i in range(args.repeat_times):
         x = np.random.random(tuple(args.shape_list)).astype(np.float32)
         tic = time.time()
-        yy = rknn.inference(inputs= [x] )
+        yy = rknn.inference(inputs=[x])
         tocs.append(time.time()-tic)
         print(i, tocs[-1], [y.shape for y in yy])
+
+    fDumpMat(args.output, yy[0])
     print("mean toc", sum(tocs)/len(tocs))
 
 

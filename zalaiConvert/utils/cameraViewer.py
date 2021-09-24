@@ -15,7 +15,10 @@ def guessSource(source=None):
         video_id = 0
     else:
         p = str(Path(source).absolute())  # os-agnostic absolute path
-        if p.endswith('.txt') and os.path.isfile(p):
+        if source.startswith('rtsp://'):
+            video_id = source
+            return img_paths, video_id
+        elif p.endswith('.txt') and os.path.isfile(p):
             with open(p, 'r') as f:
                 files = [x.strip() for x in f.read().strip().splitlines() if len(x.strip())]
         elif '*' in p:
