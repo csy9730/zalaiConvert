@@ -16,7 +16,8 @@ import time
 import numpy as np
 import torch
 
-from zalaiConvert.utils.detect_utils import draw_box, yolov5_post_processfrom zalaiConvert.utils.cameraViewer import CameraViewer
+from zalaiConvert.utils.detect_utils import draw_box, yolov5_post_process
+from zalaiConvert.utils.cameraViewer import CameraViewer
 from zalaiConvert.utils.farward_utils import predictWrap, timeit, loadClassname
 from zalaiConvert.utils.detect_utils import yolov5_post_process, draw_box
 __DIR__ = os.path.dirname(os.path.abspath(__file__))

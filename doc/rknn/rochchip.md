@@ -1,6 +1,9 @@
 # rockchip
 
+[官网](https://www.rock-chips.com/)
 
+### toybrick
+[toybrick](http://t.rock-chips.com/)
 [wiki](http://t.rock-chips.com/wiki.php)
 [entry](http://t.rock-chips.com/portal.php)
 [论坛](http://t.rock-chips.com/forum.php)
