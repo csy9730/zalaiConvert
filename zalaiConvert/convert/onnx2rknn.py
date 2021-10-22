@@ -32,7 +32,7 @@ def parse_args(cmds=None):
     parser.add_argument('--do-quantization', action='store_true', help='model file path')
     parser.add_argument('--pre-compile', action='store_true', help='model file path')
 
-    parser.add_argument('--framework', choices=['tflite', 'tensorflow', 'onnx', 'torchscript', 'pytorch', 'darknet', 'mxnet', 'caffee'], 
+    parser.add_argument('--framework', choices=['tflite', 'tensorflow', 'onnx', 'torchscript', 'pytorch', 'darknet', 'mxnet', 'caffe'], 
         help='model framework')
     parser.add_argument('--darknet-cfg')
 
@@ -46,6 +46,7 @@ def parse_args(cmds=None):
     parser.add_argument('--quantized-algorithm', default='normal')
 
     parser.add_argument('--epochs', type=int, default=-1)
+    parser.add_argument('--batch-size', type=int, default=10)
 
     parser.add_argument('--use-accanalyze', action='store_true')
     parser.add_argument('--use-farward', action='store_true')
@@ -62,14 +63,14 @@ def model2Rknn(model, output, dataset, framework='onnx', **kwargs):
         return onnxmodel2Rknn(model, output, dataset, framework='pytorch', **kwargs)
     elif framework == 'tensorflow':
         return onnxmodel2Rknn(model, output, dataset, framework='tensorflow', **kwargs)
-    elif framework in ['caffee', 'tflite', 'mxnet']:
+    elif framework in ['caffe', 'tflite', 'mxnet']:
         return onnxmodel2Rknn(model, output, dataset, framework=framework, **kwargs)
     else:
         print("%s not found" % framework)
 
 
 def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=False, \
-    verbose=None, normalize_params=None, device=None, epochs=-1, 
+    verbose=None, normalize_params=None, device=None, epochs=-1, batch_size=100,
     log_file=None, framework='onnx', quantized_algorithm='normal', target_platform=None,
     **kwargs):
     if normalize_params is None:
@@ -84,7 +85,7 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
     print('--> config model')    
     rknn.config(channel_mean_value=' '.join(normalize_params), reorder_channel='0 1 2',\
         epochs=epochs, quantized_algorithm=quantized_algorithm, 
-        target_platform=target_platform)  
+        target_platform=target_platform, batch_size=batch_size)  
     print('done')
     # Load tensorflow model
     print('--> Loading model')

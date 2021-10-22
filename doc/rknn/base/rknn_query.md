@@ -9,12 +9,26 @@
 Linux M1808 4.4.194 #1 SMP PREEMPT Thu Jul 9 14:43:13 CST 2020 aarch64 GNU/Linux
 ```
 
-### query rknn_runtime version
+### query rknn_server version
 
 ``` 
 [root@M1808 smswitch]# strings /usr/bin/rknn_server | grep build
 1.4.0 (b4a8096 build: 2020-09-14 11:15:57)
 .note.gnu.build-id
+```
+### query rknn_runtime version
+```
+[root@M1808 smswitch]# ls /usr/lib/ |grep -i rknn
+librknn_api.so*
+librknn_runtime.so
+```
+
+```
+[root@M1808 smswitch]#  strings /usr/lib/librknn_runtime.so | grep build
+librknn_runtime version 1.4.0 (4c92df0 build: 2020-09-11 20:27:18 base: 1112)
+E [%s:%d]build tensor io fail
+W [%s:%d]tensor ref input num > max_io %u, stop build
+W [%s:%d]tensor ref output num > max_io %u, stop build
 ```
 
 ### query galcore version
@@ -34,18 +48,6 @@ Linux M1808 4.4.194 #1 SMP PREEMPT Thu Jul 9 14:43:13 CST 2020 aarch64 GNU/Linux
 [    9.353556] galcore ffbc0000.npu: pvtm-volt-sel=2
 [    9.354080] galcore ffbc0000.npu: avs=0
 [    9.355514] galcore ffbc0000.npu: l=0 h=2147483647 hyst=5000 l_limit=0 h_limit=0
-[root@M1808 smswitch]#  strings /usr/lib/librknn_runtime.so | grep build
-librknn_runtime version 1.4.0 (4c92df0 build: 2020-09-11 20:27:18 base: 1112)
-E [%s:%d]build tensor io fail
-W [%s:%d]tensor ref input num > max_io %u, stop build
-W [%s:%d]tensor ref output num > max_io %u, stop build
-```
-
-### rknn runtime
-```
-[root@M1808 smswitch]# ls /usr/lib/ |grep -i rknn
-librknn_api.so*
-librknn_runtime.so
 ```
 
 ## misc
