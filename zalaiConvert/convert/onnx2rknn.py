@@ -25,23 +25,25 @@ def parse_args(cmds=None):
     parser.add_argument('--config', '-c')
 
     parser.add_argument('--input-size-list', type=int, nargs='*', action='append', 
-        help='pytorch (C,H,W) & tensorflow (H,W,C) use this input shape')
+        help='pytorch (C,H,W) & tensorflow (H,W,C) & mxnet (C,H,W) use this input shape')
+    parser.add_argument('--input-node', action='append', help='tensorflow use this input nodename')
+    parser.add_argument('--output-node', action='append', help='tensorflow use this output nodename')
 
-    parser.add_argument('--target-platform', nargs="*", choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
-    parser.add_argument('--device', choices=['rk1808', 'rv1126'], help='device: rk1808, rv1126')
+    parser.add_argument('--target-platform', nargs="*", choices=['rk1808', "rk3399pro", 'rv1126', "rv1109"], help='device: rk1808, rv1126')
+    parser.add_argument('--device', choices=['rk1808', "rk3399pro", 'rv1126'], help='device: rk1808, rv1126')
     parser.add_argument('--do-quantization', action='store_true', help='model file path')
     parser.add_argument('--pre-compile', action='store_true', help='model file path')
 
     parser.add_argument('--framework', choices=['tflite', 'tensorflow', 'onnx', 'torchscript', 'pytorch', 'darknet', 'mxnet', 'caffe'], 
         help='model framework')
-    parser.add_argument('--darknet-cfg')
+    parser.add_argument('--darknet-cfg', help='mxnet/darknet/caffe network config file')
 
     parser.add_argument('--dataset', default='1.txt', help='a txt file contain image paths')
 
     parser.add_argument('--verbose', action='store_true', help='verbose information')
     parser.add_argument('--rknn-logfile') # "rknn.log"
 
-    parser.add_argument('--rgb-reorder', action='store_true')
+    parser.add_argument('--rgb-reorder', action='store_true', help='if true  change rgb order to bgr order, order channel = 2 1 0. default is 0 1 2')
     parser.add_argument('--normalize-params', nargs='*')
     parser.add_argument('--quantized-algorithm', default='normal')
 
@@ -75,20 +77,28 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
     **kwargs):
     if normalize_params is None:
         normalize_params = ['0', '0', '0', '1']
-    
+
+    if kwargs.get("rgb_reorder"):
+        reorder_channel = '2 1 0'
+    else:
+        reorder_channel = '0 1 2'
+
     image_channel = 3
     image_size = 256
     # Create RKNN object
     rknn = RKNN(verbose=verbose, verbose_file=log_file)
     
     # pre-process config
-    print('--> config model')    
-    rknn.config(channel_mean_value=' '.join(normalize_params), reorder_channel='0 1 2',\
+    print('--> config model')   
+
+
+    rknn.config(channel_mean_value=' '.join(normalize_params), reorder_channel=reorder_channel,\
         epochs=epochs, quantized_algorithm=quantized_algorithm, 
         target_platform=target_platform, batch_size=batch_size)  
     print('done')
     # Load tensorflow model
     print('--> Loading model')
+    ret = 0
     if framework == "pytorch":
         input_size_list = kwargs.get("input_size_list", [[image_channel, image_size, image_size]])
         ret = rknn.load_pytorch(model=model, input_size_list=input_size_list)
@@ -96,9 +106,10 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
         ret = rknn.load_onnx(model=model)
     elif framework == "tensorflow":
         input_size_list = kwargs.get("input_size_list", [[image_size, image_size, image_channel]])
+        print(input_size_list, "input_size_list")
         rknn.load_tensorflow(tf_pb = model,
-            inputs = input_node,
-            outputs = output_node,
+            inputs = kwargs.get("input_node"),
+            outputs = kwargs.get("output_node"),
             input_size_list=input_size_list)
     elif framework == "tflite":
         ret = rknn.load_tflite(model=model)
@@ -107,7 +118,8 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
     elif framework == "caffe":
         ret = rknn.load_caffe(model=kwargs["darknet_cfg"], proto="caffe", blobs=model)
     elif framework == "mxnet":
-        ret = rknn.load_mxnet(model=kwargs["darknet_cfg"], params=model, input_size_list=[[image_channel, image_size, image_size]])
+        input_size_list = kwargs.get("input_size_list", [[image_channel, image_size, image_size]])
+        ret = rknn.load_mxnet(model=kwargs["darknet_cfg"], params=model, input_size_list=input_size_list)
     else:
         print("not a framework", framework)
         return -1

@@ -23,30 +23,13 @@ sys.path.insert(0, osp.join(osp.dirname(__file__), '..'))
 from lib.utils.utils import create_logger
 from lib.core.evaluation import decode_preds, compute_nme, get_preds
 from lib.utils.transforms import transform_preds
+from utils.farward_utils import activateEnv
 
 
 __DIR__ = os.path.dirname(os.path.abspath(__file__))
-
-
-def activateEnv(pth=None):
-    if pth is None:
-        pth = sys.executable
-    base = os.path.dirname(os.path.abspath(pth))
-    lst = [
-        os.path.join(base, r"Library\mingw-w64\bin"),
-        os.path.join(base, r"Library\usr\bin"),
-        os.path.join(base, r"Library\bin"),
-        os.path.join(base, r"Scripts"),
-        os.path.join(base, r"bin"),
-        os.path.join(base, r"Lib\site-packages\rknn\api\lib\hardware\LION\Windows_x64"),
-        os.path.join(base, r"Lib\site-packages\~knn\api\lib\hardware\Windows_x64"),
-        os.path.join(base, r"Lib\site-packages\torch\lib"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../bin"),
-        base,
-        os.environ.get('PATH')]
-    os.environ['PATH'] = ';'.join(lst)
-
 activateEnv()
+
+
 def guessSource(source=None):
     import glob
     from pathlib import Path

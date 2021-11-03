@@ -40,7 +40,10 @@ def main(cmds=None):
         tocs.append(time.time()-tic)
         print(i, tocs[-1], [y.shape for y in yy])
 
-    fDumpMat(args.output, yy[0])
+    try:
+        fDumpMat(args.output, yy[0])
+    except Exception as e:
+        print(e)
     print("mean toc", sum(tocs)/len(tocs))
 
 

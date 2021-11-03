@@ -95,3 +95,7 @@ python -c "import sys;import os;os.environ['PATH'] = ';'.join([r'H:\project\myli
 	- preprocesser
 	- postprocesser
     - camera
+
+### 1103
+- [x] add: tensorflow2rknn:: input_node
+- [ ] 

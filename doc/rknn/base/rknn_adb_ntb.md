@@ -190,3 +190,37 @@ restart_rknn.sh*
 rknn_server*
 start_rknn.sh*
 ```
+
+### start_usb.sh adb error
+
+**Q**: windows下切换到ntb模式失败。报以下的警告：
+
+```
+[root@M1126:/root]# start_usb.sh adb
+/usr/bin/start_usb.sh: line 35: echo: write error: No such device
+ln: failed to create symbolic link '/sys/kernel/config/usb_gadget/rockchip/configs/b.1/ffs.adb': File exists
+mount: mounting adb on /dev/usb-ffs/adb failed: Device or resource busy
+install_listener('tcp:5037','*smartsocket*')
+Using USB
+/usr/bin/start_usb.sh: line 52: echo: write error: Invalid argument
+[root@M1126:/root]# start rknn server, version:1.6.0 (159d2d3 build: 2021-01-12 17:29:40)
+I NPUTransfer: Starting NPU Transfer Server, Transfer version 2.1.0 (b5861e7@2020-11-23T11:51:07)
+```
+
+**A**: 
+
+1. 查看rknn服务
+2. 并杀死adb服务和rknn服务
+3. 重新开启ntb服务和rknn服务
+
+
+```
+[root@M1126:/root]# ps -ef  |grep rknn
+root      964    1  0 11:13 pts/0    00:00:00 /bin/sh /usr/bin/start_rknn.sh
+root      982  964  1 11:13 pts/0    00:00:00 rknn_server
+root     1015  748  0 11:14 pts/0    00:00:00 grep rknn
+
+[root@M1126:/root]# killall rknn_server start_rknn.sh
+
+[root@M1126:/root]# start_usb.sh ntb
+```
