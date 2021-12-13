@@ -45,7 +45,7 @@ def parse_args(cmds=None):
 
     parser.add_argument('--rgb-reorder', action='store_true', help='if true  change rgb order to bgr order, order channel = 2 1 0. default is 0 1 2')
     parser.add_argument('--normalize-params', nargs='*')
-    parser.add_argument('--quantized-algorithm', default='normal')
+    parser.add_argument('--quantized-algorithm', choices=['normal', 'mmse'], default='normal')
 
     parser.add_argument('--epochs', type=int, default=-1)
     parser.add_argument('--batch-size', type=int, default=10)
@@ -163,13 +163,13 @@ def onnxmodel2Rknn(model, output, dataset, do_quantization=False, pre_compile=Fa
         return ret
     print('done')
 
-    print('--> eval_memory RKNN model')
     if kwargs.get("use_evalmemory"):
+        print('--> eval_memory RKNN model')
         memory_detail = rknn.eval_memory()
         print(memory_detail)
         print('done')
 
-    print('--> accuracy_analysis RKNN model')  
+    # print('--> accuracy_analysis RKNN model')  
     if kwargs.get("use_accanalyze"):
         print('--> Begin analysis model accuracy')
         perf_ana = rknn.accuracy_analysis(inputs=dataset, target=device)

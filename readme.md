@@ -13,7 +13,9 @@ pip install git+git://github.com/csy9730/zalaiConvert.git  --user
 ```
 
 ## demo
-### ntb device found
+### ntb device uti
+
+#### found ntb device
 
 windows系统下，连接adb设备，并切换成ntb设备。
 ```
@@ -22,6 +24,7 @@ python -m zalaiConvert list
 ```
 
 ### convert network to rknn
+#### darknet/yolov4 转换成rknn
 ``` bash
 python -m zalaiConvert.convert.onnx2rknn yolov4_mirror_best.weights --darknet-cfg yolov4.cfg -o abc.rknn --framework darknet --dataset dataset.txt --normalize-params 0 0 0 255
 

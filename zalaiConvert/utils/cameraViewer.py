@@ -72,6 +72,7 @@ class CameraViewer:
             print("use images")
             self.title = "img_{i}"
         else:
+            assert video_id is not None
             cap = cv2.VideoCapture(video_id)
             assert cap.isOpened(), f'Failed to open {video_id}'
             self.imgs = generate_camera(cap)
