@@ -64,7 +64,7 @@ def dumpsStatusDec(onStart, onEnd=None, outfile=None):
 
 # logger = logging.getLogger(__name__)
 
-def setLogger(name, level="INFO", disable=False, log_file="tmp_zalAI.log"):
+def setLogger(name, level=logging.INFO, disable=False, log_file="zalai.log"):
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.disabled = disable

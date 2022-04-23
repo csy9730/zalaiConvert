@@ -13,3 +13,4 @@ proj/
 tmp_*
 data/
 *.log
+logs/

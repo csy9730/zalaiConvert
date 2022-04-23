@@ -10,9 +10,11 @@ from zalaiConvert.utils.farward_utils import activateEnv, loadClassname, \
     timeit, parse_args, RknnPredictor
 from zalaiConvert.utils.rknn_utils import getRknn, rknn_query_model, get_io_shape
 from zalaiConvert.utils.detect_utils import nms_boxes, filter_boxes, parse_model_cfg, yolov3_post_process, draw_box
+from zalaiConvert.utils.common import setLogger
+
 
 activateEnv()
-
+logger =  setLogger(__name__)
 class RknnPredictor(object):
     def __init__(self, rknn):
         self.rknn = rknn
@@ -31,7 +33,7 @@ class RknnPredictor(object):
         self.in_shape, self.out_shape = get_io_shape(self.mcfg)
         
         self.set_NUMCLS(self.out_shape[0][1] // self.SPAN - 5)
-        print(self.in_shape, self.out_shape)
+        logger.info((self.in_shape, self.out_shape))
 
         self.GRID = [a[2] for a in self.out_shape]
 
@@ -53,7 +55,7 @@ class RknnPredictor(object):
             self.anchors = yolos[0]["anchors"]
             self.SPAN = len(yolos[0]["mask"])
             self.masks = [y["mask"] for y in yolos]
-            print(self.masks,self.SPAN)
+            logger.info((self.masks,self.SPAN))
             self._cfg_path = cfg_path
             self.guess_cfg()
             
@@ -111,6 +113,7 @@ def predictWrap(source, model, args=None):
     W, H = model.width, model.height
 
     for i, img in enumerate(imgs):
+        logger.info("predict %d" % (i+1))
         preds = model.predict(img, args)
         img2 = model.draw(img, preds)
 
@@ -126,7 +129,7 @@ def predictWrap(source, model, args=None):
             if k == 27:
                 break
 
-    print("predict finished")
+    logger.info("predict finished")
 
 
 def main(cmds=None):
@@ -138,17 +141,18 @@ def main(cmds=None):
         args.output = 'out.jpg'
 
     mcfg = rknn_query_model(args.model)
-    print(get_io_shape(mcfg))
+    logger.info(get_io_shape(mcfg))
     # exit(0)
     rknn = getRknn(args.model, device=args.device, device_id=args.device_id)
     if rknn is None:
+        logger.error("rknn is None")
         exit(-1)
     model = RknnPredictor(rknn)
     model.loadCfg(args.network)
     model.loadGenClass(args.name_file)
 
     predictWrap(args.input, model, args)
-    print("__________________exit__________________")
+    logger.info("__________________exit__________________")
 
 if __name__ == "__main__":
     # cmds += ['--use-padding', '--input-chw', '--device', 'rk1808', '--save-img', '--task', 'segment']
